@@ -1,0 +1,27 @@
+/* See the Tailwind configuration guide for advanced usage
+   https://tailwindcss.com/docs/configuration */
+
+@import "tailwindcss" source(none);
+@source "../css";
+@source "../js";
+@source "../../lib/toast_demo_web/";
+
+/* A Tailwind plugin that makes "hero-#{ICON}" classes available.
+   The heroicons installation itself is managed by your mix.exs */
+@plugin "../vendor/heroicons";
+
+/* Remove daisyUI - using plain Tailwind CSS */
+
+/* Add variants based on LiveView classes */
+@custom-variant phx-click-loading ([".phx-click-loading&", ".phx-click-loading &"]);
+@custom-variant phx-submit-loading ([".phx-submit-loading&", ".phx-submit-loading &"]);
+@custom-variant phx-change-loading ([".phx-change-loading&", ".phx-change-loading &"]);
+
+/* Make LiveView wrapper divs transparent for layout */
+[data-phx-root-id] { display: contents }
+
+/* This file is for your main application CSS */
+
+/* Import Toast styles from the library */
+/* @import "../../../assets/css/toast.css"; FOR LOCAL DEV */
+@import "../../deps/toast/assets/css/toast.css";
