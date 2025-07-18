@@ -15,7 +15,7 @@ defmodule Toast do
 
       def deps do
         [
-          {:toast, "~> 0.0.3"}
+          {:toast, "~> 0.1.0"}
         ]
       end
 

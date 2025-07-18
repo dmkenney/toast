@@ -56,7 +56,7 @@ defmodule ToastDemo.MixProject do
       {:bandit, "~> 1.5"},
       # For local development use: {:toast, path: "../"}
       # For deployment, we need to use a published package or git repo
-      {:toast, "~> 0.0.3"},
+      {:toast, "~> 0.1.0"},
       {:live_debugger, "~> 0.3.0", only: :dev}
     ]
   end
