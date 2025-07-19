@@ -64,6 +64,12 @@ let liveSocket = new LiveSocket("/live", Socket, {
 /* For assets in nested folders (e.g., assets/css/app.css): */
 @import "../../deps/toast/assets/css/toast.css";
 ```
+If you are using Daisy UI, you should exclude the Toast component to avoid style conflicts
+```css
+@plugin "../vendor/daisyui" {
+    exclude: toast;
+}
+```
 
 3. Add the toast container to your root layout (`root.html.heex`):
 
