@@ -43,6 +43,11 @@ defmodule Toast do
       /* For assets in nested folders (e.g., assets/css/app.css): */
       @import "../../deps/toast/assets/css/toast.css";
 
+      /* If you are using DaisyUI, exclude their toast component to avoid conflicts: */
+      @plugin "../vendor/daisyui" {
+        exclude: toast;
+      }
+
   3. Add the toast container to your root layout:
 
       <Toast.toast_group flash={@flash} />
