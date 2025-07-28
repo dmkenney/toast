@@ -4,7 +4,7 @@ defmodule ToastDemo.MixProject do
   def project do
     [
       app: :toast_demo,
-      version: "0.1.0",
+      version: "0.2.0",
       elixir: "~> 1.15",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
@@ -54,7 +54,7 @@ defmodule ToastDemo.MixProject do
       {:telemetry_poller, "~> 1.0"},
       {:jason, "~> 1.2"},
       {:bandit, "~> 1.5"},
-      {:toast, "~> 0.1.0"},
+      {:toast, "~> 0.2.0"},
       {:live_debugger, "~> 0.3.0", only: :dev}
     ]
   end

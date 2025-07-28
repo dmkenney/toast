@@ -70,10 +70,10 @@ defmodule Mix.Tasks.Mode do
 
       case lock_data[:toast] do
         {:hex, :toast, version, _, _, _, _, _} -> version
-        _ -> "0.1.0 (from mix.exs)"
+        _ -> "0.2.0 (from mix.exs)"
       end
     else
-      "0.1.0 (from mix.exs)"
+      "0.2.0 (from mix.exs)"
     end
   end
 end

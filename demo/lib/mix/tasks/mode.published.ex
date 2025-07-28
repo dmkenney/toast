@@ -70,10 +70,10 @@ defmodule Mix.Tasks.Mode.Published do
 
       case Regex.run(~r/@version\s+"([^"]+)"/, content) do
         [_, version] -> version
-        _ -> "0.1.0"
+        _ -> "0.2.0"
       end
     else
-      "0.1.0"
+      "0.2.0"
     end
   end
 end
