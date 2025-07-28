@@ -39,7 +39,9 @@ defmodule Toast.LiveComponent do
   def update(assigns, socket) do
     socket =
       socket
-      |> assign(Map.take(assigns, [:position, :theme, :rich_colors, :max_toasts]))
+      |> assign(
+        Map.take(assigns, [:position, :theme, :rich_colors, :max_toasts, :animation_duration])
+      )
 
     # Only update flash messages if flash is explicitly provided in assigns
     socket =
@@ -88,6 +90,7 @@ defmodule Toast.LiveComponent do
         data-theme={assigns[:theme] || "light"}
         data-rich-colors={to_string(assigns[:rich_colors] || false)}
         data-max-toasts={assigns[:max_toasts]}
+        data-animation-duration={assigns[:animation_duration] || 400}
         phx-update="stream"
         phx-hook="Toast"
         style="position: relative;"

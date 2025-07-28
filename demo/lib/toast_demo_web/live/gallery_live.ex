@@ -75,6 +75,21 @@ defmodule ToastDemoWeb.GalleryLive do
             </div>
           </section>
 
+          <%!-- HTML Content Examples --%>
+          <section>
+            <h2 class="text-3xl font-semibold mb-6">HTML Content</h2>
+            <div class="theme-light flex flex-wrap gap-x-6 gap-y-4 justify-center">
+              <%= for toast <- html_content_toasts() do %>
+                <div class="toast-static">
+                  <Toast.Components.toast toast={toast} />
+                </div>
+              <% end %>
+            </div>
+            <p class="text-sm text-gray-500 text-center mt-4">
+              ⚠️ HTML content rendered using Phoenix.HTML.raw() - only use with trusted content!
+            </p>
+          </section>
+
           <%!-- Dark Theme Toasts --%>
           <section>
             <h2 class="text-3xl font-semibold mb-6">Dark Theme</h2>
@@ -288,6 +303,50 @@ defmodule ToastDemoWeb.GalleryLive do
         message: "Toast with custom star icon",
         icon:
           ~s(<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>),
+        duration: 0,
+        close_button: true
+      }
+    ]
+  end
+
+  defp html_content_toasts do
+    [
+      %Toast{
+        id: "html-1",
+        type: :info,
+        message:
+          Phoenix.HTML.raw("<strong>Bold</strong>, <em>italic</em>, and <u>underlined</u> text"),
+        duration: 0,
+        close_button: true
+      },
+      %Toast{
+        id: "html-2",
+        type: :success,
+        title: Phoenix.HTML.raw("Payment <em>Successful</em>"),
+        message:
+          Phoenix.HTML.raw(
+            "Transaction ID: <code style='background: #f3f4f6; padding: 2px 4px; border-radius: 3px;'>TXN-12345</code>"
+          ),
+        duration: 0,
+        close_button: true
+      },
+      %Toast{
+        id: "html-3",
+        type: :info,
+        message:
+          Phoenix.HTML.raw(
+            "Visit our <a href='#' style='color: #3b82f6; text-decoration: underline;'>documentation</a>"
+          ),
+        description: Phoenix.HTML.raw("Learn more about using <code>Phoenix.HTML.raw()</code>"),
+        duration: 0,
+        close_button: true
+      },
+      %Toast{
+        id: "html-4",
+        type: :warning,
+        title: "Mixed Content Example",
+        message: "This message is escaped: <b>Not Bold</b>",
+        description: Phoenix.HTML.raw("But this has <strong>HTML formatting</strong>!"),
         duration: 0,
         close_button: true
       }

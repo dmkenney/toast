@@ -311,6 +311,80 @@ defmodule ToastDemoWeb.HomeLive do
             </div>
           </section>
 
+          <%!-- Animation Speed --%>
+          <section>
+            <h2 class="text-2xl font-semibold mb-4">Animation Speed</h2>
+            <div class="flex gap-4">
+              <button
+                phx-click="change_animation_speed"
+                phx-value-duration="200"
+                class={"px-4 py-2 rounded-md transition-colors " <> if assigns[:animation_duration] == 200, do: "bg-indigo-600 text-white hover:bg-indigo-700", else: "bg-gray-200 text-gray-800 hover:bg-gray-300"}
+              >
+                Short (200ms)
+              </button>
+
+              <button
+                phx-click="change_animation_speed"
+                phx-value-duration="400"
+                class={"px-4 py-2 rounded-md transition-colors " <> if assigns[:animation_duration] == 400, do: "bg-indigo-600 text-white hover:bg-indigo-700", else: "bg-gray-200 text-gray-800 hover:bg-gray-300"}
+              >
+                Normal (400ms)
+              </button>
+
+              <button
+                phx-click="change_animation_speed"
+                phx-value-duration="800"
+                class={"px-4 py-2 rounded-md transition-colors " <> if assigns[:animation_duration] == 800, do: "bg-indigo-600 text-white hover:bg-indigo-700", else: "bg-gray-200 text-gray-800 hover:bg-gray-300"}
+              >
+                Long (800ms)
+              </button>
+            </div>
+            <p class="text-sm text-gray-500 mt-2">
+              Change the animation speed for all toasts
+            </p>
+          </section>
+
+          <%!-- HTML Content --%>
+          <section>
+            <h2 class="text-2xl font-semibold mb-4">HTML Content</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <button
+                phx-click="show_html_toast"
+                phx-value-variant="basic"
+                class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+              >
+                Basic HTML Formatting
+              </button>
+
+              <button
+                phx-click="show_html_toast"
+                phx-value-variant="rich"
+                class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+              >
+                Rich HTML with Links
+              </button>
+
+              <button
+                phx-click="show_html_toast"
+                phx-value-variant="code"
+                class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+              >
+                Code Examples
+              </button>
+
+              <button
+                phx-click="show_html_toast"
+                phx-value-variant="mixed"
+                class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+              >
+                Mixed Safe/Unsafe
+              </button>
+            </div>
+            <p class="text-sm text-gray-500 mt-2">
+              ⚠️ HTML content must be wrapped with Phoenix.HTML.raw() - only use with trusted content!
+            </p>
+          </section>
+
           <%!-- Regular Flash Messages --%>
           <section>
             <h2 class="text-2xl font-semibold mb-4">Regular Flash Messages</h2>
@@ -367,6 +441,7 @@ defmodule ToastDemoWeb.HomeLive do
        position: "bottom-right",
        theme: "light",
        rich_colors: true,
+       animation_duration: 400,
        current_path: ~p"/"
      )}
   end
@@ -387,6 +462,52 @@ defmodule ToastDemoWeb.HomeLive do
     opts = if title, do: Keyword.put(opts, :title, title), else: opts
 
     Toast.send_toast(type, message, opts)
+
+    {:noreply, socket}
+  end
+
+  def handle_event("show_html_toast", %{"variant" => variant}, socket) do
+    case variant do
+      "basic" ->
+        Toast.send_toast(
+          :info,
+          Phoenix.HTML.raw(
+            "<strong>Bold text</strong>, <em>italic text</em>, and <u>underlined text</u>"
+          )
+        )
+
+      "rich" ->
+        Toast.send_toast(
+          :success,
+          Phoenix.HTML.raw(
+            "Check out the <a href='https://hexdocs.pm/toast' target='_blank' style='color: #3b82f6; text-decoration: underline;'>documentation</a>"
+          ),
+          title: Phoenix.HTML.raw("HTML <em>Support</em>"),
+          description:
+            Phoenix.HTML.raw(
+              "You can use <code style='background: #f3f4f6; padding: 2px 4px; border-radius: 3px;'>Phoenix.HTML.raw()</code> for rich content"
+            )
+        )
+
+      "code" ->
+        Toast.send_toast(
+          :info,
+          Phoenix.HTML.raw(
+            "Transaction ID: <code style='background: #1e293b; color: #94a3b8; padding: 4px 8px; border-radius: 4px; font-family: monospace;'>TXN-12345-ABCDE</code>"
+          ),
+          title: "Payment Processed",
+          duration: 8000
+        )
+
+      "mixed" ->
+        Toast.send_toast(
+          :warning,
+          "This message is escaped: <b>Not Bold</b>",
+          title: "Mixed content example",
+          description:
+            Phoenix.HTML.raw("But this description has <strong>HTML formatting</strong>!")
+        )
+    end
 
     {:noreply, socket}
   end
@@ -463,6 +584,14 @@ defmodule ToastDemoWeb.HomeLive do
     socket = assign(socket, rich_colors: rich_colors)
     status = if rich_colors, do: "enabled", else: "disabled"
     Toast.send_toast(:info, "Rich colors #{status}")
+
+    {:noreply, socket}
+  end
+
+  def handle_event("change_animation_speed", %{"duration" => duration}, socket) do
+    duration = String.to_integer(duration)
+    socket = assign(socket, animation_duration: duration)
+    Toast.send_toast(:info, "Animation speed changed to #{duration}ms")
 
     {:noreply, socket}
   end

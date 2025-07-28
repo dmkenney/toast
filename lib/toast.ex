@@ -15,7 +15,7 @@ defmodule Toast do
 
       def deps do
         [
-          {:toast, "~> 0.1.0"}
+          {:toast, "~> 0.2.0"}
         ]
       end
 
@@ -42,6 +42,11 @@ defmodule Toast do
       
       /* For assets in nested folders (e.g., assets/css/app.css): */
       @import "../../deps/toast/assets/css/toast.css";
+
+      /* If you are using DaisyUI, exclude their toast component to avoid conflicts: */
+      @plugin "../vendor/daisyui" {
+        exclude: toast;
+      }
 
   3. Add the toast container to your root layout:
 
@@ -87,6 +92,22 @@ defmodule Toast do
           event: "undo_action"
         }
       )
+
+  ## HTML Content
+
+  Toast supports rendering raw HTML in messages, titles, and descriptions using `Phoenix.HTML.raw/1`:
+
+      # Render HTML in message
+      Toast.send_toast(:info, Phoenix.HTML.raw("<strong>Important:</strong> Action required"))
+
+      # Render HTML in all fields
+      Toast.send_toast(:success, Phoenix.HTML.raw("Payment <em>processed</em>"),
+        title: Phoenix.HTML.raw("<strong>Success!</strong>"),
+        description: Phoenix.HTML.raw("Transaction ID: <code>TXN-12345</code>")
+      )
+
+  **⚠️ Security Warning**: Only use `Phoenix.HTML.raw/1` with trusted content. Never render 
+  user-generated HTML without proper sanitization as it can lead to XSS vulnerabilities.
 
   See the documentation for `send_toast/3` for all available options.
   """
@@ -139,6 +160,7 @@ defmodule Toast do
         theme="dark"
         rich_colors={true}
         max_toasts={5}
+        animation_duration={600}
       />
 
   ## Attributes
@@ -149,6 +171,7 @@ defmodule Toast do
   * `:theme` - Theme: "light" or "dark" (default: "light")
   * `:rich_colors` - Whether to use rich colors for different toast types (default: false)
   * `:max_toasts` - Maximum number of toasts to display (default: 3)
+  * `:animation_duration` - Duration of animations in milliseconds (default: 400)
   """
   attr(:id, :string, default: "toast-group")
   attr(:flash, :map, required: false)
@@ -156,6 +179,7 @@ defmodule Toast do
   attr(:theme, :string, default: "light")
   attr(:rich_colors, :boolean, default: false)
   attr(:max_toasts, :integer, default: 3)
+  attr(:animation_duration, :integer, default: 400)
 
   def toast_group(assigns) do
     ~H"""
@@ -167,6 +191,7 @@ defmodule Toast do
         theme={@theme}
         rich_colors={@rich_colors}
         max_toasts={@max_toasts}
+        animation_duration={@animation_duration}
       />
     """
   end
@@ -178,6 +203,19 @@ defmodule Toast do
 
       Toast.send_toast(:info, "Operation completed!")
       Toast.send_toast(:error, "Something went wrong", title: "Error", duration: 10_000)
+
+  ## HTML Content
+
+  You can render raw HTML in any text field using `Phoenix.HTML.raw/1`:
+
+      Toast.send_toast(:info, Phoenix.HTML.raw("<strong>Bold</strong> text"))
+      
+      Toast.send_toast(:success, Phoenix.HTML.raw("Check the <a href='/docs'>docs</a>"),
+        title: Phoenix.HTML.raw("<em>Success!</em>"),
+        description: Phoenix.HTML.raw("Transaction: <code>ABC-123</code>")
+      )
+
+  **Security Note**: Only use `Phoenix.HTML.raw/1` with trusted content to avoid XSS attacks.
   """
   def send_toast(type, message, opts \\ []) do
     toast = build_toast(type, message, opts)

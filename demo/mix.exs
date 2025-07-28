@@ -4,7 +4,7 @@ defmodule ToastDemo.MixProject do
   def project do
     [
       app: :toast_demo,
-      version: "0.1.0",
+      version: "0.2.0",
       elixir: "~> 1.15",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
@@ -54,9 +54,7 @@ defmodule ToastDemo.MixProject do
       {:telemetry_poller, "~> 1.0"},
       {:jason, "~> 1.2"},
       {:bandit, "~> 1.5"},
-      # For local development use: {:toast, path: "../"}
-      # For deployment, we need to use a published package or git repo
-      {:toast, "~> 0.1.0"},
+      {:toast, "~> 0.2.0"},
       {:live_debugger, "~> 0.3.0", only: :dev}
     ]
   end
@@ -77,7 +75,8 @@ defmodule ToastDemo.MixProject do
         "tailwind toast_demo --minify",
         "esbuild toast_demo --minify",
         "phx.digest"
-      ]
+      ],
+      deploy: ["mode.published", "cmd fly deploy"]
     ]
   end
 end

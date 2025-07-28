@@ -31,7 +31,7 @@ Add `toast` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:toast, "~> 0.1.0"}
+    {:toast, "~> 0.2.0"}
   ]
 end
 ```
@@ -146,6 +146,7 @@ Configure the toast container with these attributes:
   theme="light"
   rich_colors={false}
   max_toasts={3}
+  animation_duration={400}
 />
 ```
 
@@ -155,6 +156,7 @@ Configure the toast container with these attributes:
 | `theme` | string | `"light"` | Theme style: `"light"` or `"dark"` |
 | `rich_colors` | boolean | `false` | Use more vibrant colors for toast types |
 | `max_toasts` | integer | `3` | Maximum number of visible toasts |
+| `animation_duration` | integer | `400` | Duration of animations in milliseconds |
 
 ### Individual Toast Options
 
@@ -210,6 +212,28 @@ Toast.send_toast(:info, "Custom icon",
 )
 ```
 
+### HTML Content
+
+Toast supports rendering raw HTML in messages, titles, and descriptions using `Phoenix.HTML.raw/1`:
+
+```elixir
+# Basic HTML formatting
+Toast.send_toast(:info, Phoenix.HTML.raw("<strong>Bold</strong> and <em>italic</em> text"))
+
+# Rich HTML content
+Toast.send_toast(:success, Phoenix.HTML.raw("Payment processed"),
+  title: Phoenix.HTML.raw("Transaction <em>Complete</em>"),
+  description: Phoenix.HTML.raw("ID: <code>TXN-12345</code>")
+)
+
+# Mixed content (some fields escaped, some raw)
+Toast.send_toast(:info, "This is escaped: <script>",
+  description: Phoenix.HTML.raw("This is <strong>HTML</strong>")
+)
+```
+
+**⚠️ Security Warning**: Only use `Phoenix.HTML.raw/1` with trusted content. Never render user-generated HTML without proper sanitization as it can lead to XSS vulnerabilities.
+
 ### Update Existing Toasts
 
 Update a toast after it's displayed:
@@ -257,6 +281,7 @@ Toast uses CSS custom properties for easy theming:
   --toast-gap: 15px;
   --toast-width: 350px;
   --toast-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --toast-animation-duration: 400ms;
 }
 
 /* Override specific toast types */
