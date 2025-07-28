@@ -54,8 +54,6 @@ defmodule ToastDemo.MixProject do
       {:telemetry_poller, "~> 1.0"},
       {:jason, "~> 1.2"},
       {:bandit, "~> 1.5"},
-      # For local development use: {:toast, path: "../"}
-      # For deployment, we need to use a published package or git repo
       {:toast, "~> 0.1.0"},
       {:live_debugger, "~> 0.3.0", only: :dev}
     ]
@@ -77,7 +75,8 @@ defmodule ToastDemo.MixProject do
         "tailwind toast_demo --minify",
         "esbuild toast_demo --minify",
         "phx.digest"
-      ]
+      ],
+      deploy: ["mode.published", "cmd fly deploy"]
     ]
   end
 end
