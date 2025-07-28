@@ -144,6 +144,7 @@ defmodule Toast do
         theme="dark"
         rich_colors={true}
         max_toasts={5}
+        animation_duration={600}
       />
 
   ## Attributes
@@ -154,6 +155,7 @@ defmodule Toast do
   * `:theme` - Theme: "light" or "dark" (default: "light")
   * `:rich_colors` - Whether to use rich colors for different toast types (default: false)
   * `:max_toasts` - Maximum number of toasts to display (default: 3)
+  * `:animation_duration` - Duration of animations in milliseconds (default: 400)
   """
   attr(:id, :string, default: "toast-group")
   attr(:flash, :map, required: false)
@@ -161,6 +163,7 @@ defmodule Toast do
   attr(:theme, :string, default: "light")
   attr(:rich_colors, :boolean, default: false)
   attr(:max_toasts, :integer, default: 3)
+  attr(:animation_duration, :integer, default: 400)
 
   def toast_group(assigns) do
     ~H"""
@@ -172,6 +175,7 @@ defmodule Toast do
         theme={@theme}
         rich_colors={@rich_colors}
         max_toasts={@max_toasts}
+        animation_duration={@animation_duration}
       />
     """
   end

@@ -311,6 +311,39 @@ defmodule ToastDemoWeb.HomeLive do
             </div>
           </section>
 
+          <%!-- Animation Speed --%>
+          <section>
+            <h2 class="text-2xl font-semibold mb-4">Animation Speed</h2>
+            <div class="flex gap-4">
+              <button
+                phx-click="change_animation_speed"
+                phx-value-duration="200"
+                class={"px-4 py-2 rounded-md transition-colors " <> if assigns[:animation_duration] == 200, do: "bg-indigo-600 text-white hover:bg-indigo-700", else: "bg-gray-200 text-gray-800 hover:bg-gray-300"}
+              >
+                Short (200ms)
+              </button>
+
+              <button
+                phx-click="change_animation_speed"
+                phx-value-duration="400"
+                class={"px-4 py-2 rounded-md transition-colors " <> if assigns[:animation_duration] == 400, do: "bg-indigo-600 text-white hover:bg-indigo-700", else: "bg-gray-200 text-gray-800 hover:bg-gray-300"}
+              >
+                Normal (400ms)
+              </button>
+
+              <button
+                phx-click="change_animation_speed"
+                phx-value-duration="800"
+                class={"px-4 py-2 rounded-md transition-colors " <> if assigns[:animation_duration] == 800, do: "bg-indigo-600 text-white hover:bg-indigo-700", else: "bg-gray-200 text-gray-800 hover:bg-gray-300"}
+              >
+                Long (800ms)
+              </button>
+            </div>
+            <p class="text-sm text-gray-500 mt-2">
+              Change the animation speed for all toasts
+            </p>
+          </section>
+
           <%!-- Regular Flash Messages --%>
           <section>
             <h2 class="text-2xl font-semibold mb-4">Regular Flash Messages</h2>
@@ -367,6 +400,7 @@ defmodule ToastDemoWeb.HomeLive do
        position: "bottom-right",
        theme: "light",
        rich_colors: true,
+       animation_duration: 400,
        current_path: ~p"/"
      )}
   end
@@ -463,6 +497,14 @@ defmodule ToastDemoWeb.HomeLive do
     socket = assign(socket, rich_colors: rich_colors)
     status = if rich_colors, do: "enabled", else: "disabled"
     Toast.send_toast(:info, "Rich colors #{status}")
+
+    {:noreply, socket}
+  end
+
+  def handle_event("change_animation_speed", %{"duration" => duration}, socket) do
+    duration = String.to_integer(duration)
+    socket = assign(socket, animation_duration: duration)
+    Toast.send_toast(:info, "Animation speed changed to #{duration}ms")
 
     {:noreply, socket}
   end

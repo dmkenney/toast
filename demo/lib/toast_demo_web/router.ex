@@ -2,24 +2,24 @@ defmodule ToastDemoWeb.Router do
   use ToastDemoWeb, :router
 
   pipeline :browser do
-    plug :accepts, ["html"]
-    plug :fetch_session
-    plug :fetch_live_flash
-    plug :put_root_layout, html: {ToastDemoWeb.Layouts, :root}
-    plug :protect_from_forgery
-    plug :put_secure_browser_headers
+    plug(:accepts, ["html"])
+    plug(:fetch_session)
+    plug(:fetch_live_flash)
+    plug(:put_root_layout, html: {ToastDemoWeb.Layouts, :root})
+    plug(:protect_from_forgery)
+    plug(:put_secure_browser_headers)
   end
 
   pipeline :api do
-    plug :accepts, ["json"]
+    plug(:accepts, ["json"])
   end
 
   scope "/", ToastDemoWeb do
-    pipe_through :browser
+    pipe_through(:browser)
 
     live_session :default, layout: {ToastDemoWeb.Layouts, :app} do
-      live "/", HomeLive
-      live "/gallery", GalleryLive
+      live("/", HomeLive)
+      live("/gallery", GalleryLive)
     end
   end
 
@@ -38,10 +38,10 @@ defmodule ToastDemoWeb.Router do
     import Phoenix.LiveDashboard.Router
 
     scope "/dev" do
-      pipe_through :browser
+      pipe_through(:browser)
 
-      live_dashboard "/dashboard", metrics: ToastDemoWeb.Telemetry
-      forward "/mailbox", Plug.Swoosh.MailboxPreview
+      live_dashboard("/dashboard", metrics: ToastDemoWeb.Telemetry)
+      forward("/mailbox", Plug.Swoosh.MailboxPreview)
     end
   end
 end
