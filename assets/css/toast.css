@@ -8,6 +8,7 @@
   width: 356px;
   max-width: calc(100vw - 32px);
   --front-toast-height: 0px;
+  --toast-animation-duration: 400ms;
   gap: 16px;
 }
 
@@ -78,7 +79,7 @@
   z-index: var(--z-index);
   left: 0;
   right: 0;
-  transition: transform 400ms ease, opacity 400ms ease, height 400ms ease;
+  transition: transform var(--toast-animation-duration) ease, opacity var(--toast-animation-duration) ease, height var(--toast-animation-duration) ease;
 }
 
 /* Top positions use relative positioning for front toast */
@@ -166,7 +167,7 @@
 
 /* Smooth transitions for toast content */
 .toast > * {
-  transition: opacity 400ms ease;
+  transition: opacity var(--toast-animation-duration) ease;
 }
 
 /* All toasts when expanded (hovering) - bottom positions */

@@ -7,7 +7,11 @@ export default {
     this.position = this.el.dataset.position || "bottom-right";
     this.gap = 15;
     this.maxToasts = parseInt(this.el.dataset.maxToasts) || null;
+    this.animationDuration = parseInt(this.el.dataset.animationDuration) || 400;
     this.expanded = false;
+
+    // Set CSS variable for animation duration
+    this.el.parentElement.style.setProperty('--toast-animation-duration', `${this.animationDuration}ms`);
 
     // Handle clear-flash events from server
     this.handleEvent("clear-flash", ({ key }) => {
@@ -50,6 +54,22 @@ export default {
   updated() {
     // Update maxToasts in case it changed
     this.maxToasts = parseInt(this.el.dataset.maxToasts) || null;
+    const newAnimationDuration = parseInt(this.el.dataset.animationDuration) || 400;
+    
+    // Check if animation duration changed
+    if (newAnimationDuration !== this.animationDuration) {
+      this.animationDuration = newAnimationDuration;
+      
+      // Update CSS variable for animation duration
+      this.el.parentElement.style.setProperty('--toast-animation-duration', `${this.animationDuration}ms`);
+      
+      // Update transition on all existing toasts
+      this.toasts.forEach((toastInfo) => {
+        if (toastInfo.element && toastInfo.element.getAttribute('data-mounted') === 'true') {
+          toastInfo.element.style.transition = `all ${this.animationDuration}ms cubic-bezier(0.21, 1.02, 0.73, 1)`;
+        }
+      });
+    }
 
     // Immediately update positions for all toasts when DOM changes
     const toastElements = Array.from(this.el.querySelectorAll('[id^="toasts-"]'));
@@ -165,7 +185,7 @@ export default {
 
       // Small delay to ensure layout is settled, then enable transitions and mount
       setTimeout(() => {
-        toastEl.style.transition = "all 400ms cubic-bezier(0.21, 1.02, 0.73, 1)";
+        toastEl.style.transition = `all ${this.animationDuration}ms cubic-bezier(0.21, 1.02, 0.73, 1)`;
         toastEl.setAttribute('data-mounted', 'true');
       }, 10);
 
@@ -356,7 +376,7 @@ export default {
           // Wait for animation to complete before removing
           setTimeout(() => {
             this.removeToastFromServer(toastId);
-          }, 300); // Animation duration
+          }, this.animationDuration); // Animation duration
         }
       } else {
         // Show toasts within limit
@@ -396,7 +416,7 @@ export default {
 
             // Also send event to parent LiveView to clear from Phoenix flash
             this.pushEvent("lv:clear-flash", { key: flashKey });
-          }, 300);
+          }, this.animationDuration);
         }
       }
     });

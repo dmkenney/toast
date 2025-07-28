@@ -146,6 +146,7 @@ Configure the toast container with these attributes:
   theme="light"
   rich_colors={false}
   max_toasts={3}
+  animation_duration={400}
 />
 ```
 
@@ -155,6 +156,7 @@ Configure the toast container with these attributes:
 | `theme` | string | `"light"` | Theme style: `"light"` or `"dark"` |
 | `rich_colors` | boolean | `false` | Use more vibrant colors for toast types |
 | `max_toasts` | integer | `3` | Maximum number of visible toasts |
+| `animation_duration` | integer | `400` | Duration of animations in milliseconds |
 
 ### Individual Toast Options
 
@@ -257,6 +259,7 @@ Toast uses CSS custom properties for easy theming:
   --toast-gap: 15px;
   --toast-width: 350px;
   --toast-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --toast-animation-duration: 400ms;
 }
 
 /* Override specific toast types */
