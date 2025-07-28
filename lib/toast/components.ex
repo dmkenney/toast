@@ -27,13 +27,13 @@ defmodule Toast.Components do
 
       <div class="toast-content">
         <div :if={@toast.title} class="toast-title">
-          <%= @toast.title %>
+          <%= render_content(@toast.title) %>
         </div>
         <div class="toast-message">
-          <%= @toast.message %>
+          <%= render_content(@toast.message) %>
         </div>
         <div :if={@toast.description} class="toast-description">
-          <%= @toast.description %>
+          <%= render_content(@toast.description) %>
         </div>
         <div :if={@toast.action && !inline_action?(@toast.action)} class="toast-actions">
           <button
@@ -192,6 +192,18 @@ defmodule Toast.Components do
 
   defp inline_action?(_), do: false
 
+  defp render_content({:safe, _} = safe_content) do
+    safe_content
+  end
+
+  defp render_content(content) when is_binary(content) do
+    content
+  end
+
+  defp render_content(content) do
+    to_string(content)
+  end
+
   @doc """
   Renders flash messages when not connected to LiveView.
   This provides a fallback for server-rendered pages.
@@ -220,7 +232,7 @@ defmodule Toast.Components do
 
           <div class="toast-content">
             <div class="toast-message">
-              <%= message %>
+              <%= render_content(message) %>
             </div>
           </div>
 

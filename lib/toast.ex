@@ -93,6 +93,22 @@ defmodule Toast do
         }
       )
 
+  ## HTML Content
+
+  Toast supports rendering raw HTML in messages, titles, and descriptions using `Phoenix.HTML.raw/1`:
+
+      # Render HTML in message
+      Toast.send_toast(:info, Phoenix.HTML.raw("<strong>Important:</strong> Action required"))
+
+      # Render HTML in all fields
+      Toast.send_toast(:success, Phoenix.HTML.raw("Payment <em>processed</em>"),
+        title: Phoenix.HTML.raw("<strong>Success!</strong>"),
+        description: Phoenix.HTML.raw("Transaction ID: <code>TXN-12345</code>")
+      )
+
+  **⚠️ Security Warning**: Only use `Phoenix.HTML.raw/1` with trusted content. Never render 
+  user-generated HTML without proper sanitization as it can lead to XSS vulnerabilities.
+
   See the documentation for `send_toast/3` for all available options.
   """
 
@@ -187,6 +203,19 @@ defmodule Toast do
 
       Toast.send_toast(:info, "Operation completed!")
       Toast.send_toast(:error, "Something went wrong", title: "Error", duration: 10_000)
+
+  ## HTML Content
+
+  You can render raw HTML in any text field using `Phoenix.HTML.raw/1`:
+
+      Toast.send_toast(:info, Phoenix.HTML.raw("<strong>Bold</strong> text"))
+      
+      Toast.send_toast(:success, Phoenix.HTML.raw("Check the <a href='/docs'>docs</a>"),
+        title: Phoenix.HTML.raw("<em>Success!</em>"),
+        description: Phoenix.HTML.raw("Transaction: <code>ABC-123</code>")
+      )
+
+  **Security Note**: Only use `Phoenix.HTML.raw/1` with trusted content to avoid XSS attacks.
   """
   def send_toast(type, message, opts \\ []) do
     toast = build_toast(type, message, opts)

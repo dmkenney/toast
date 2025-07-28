@@ -212,6 +212,28 @@ Toast.send_toast(:info, "Custom icon",
 )
 ```
 
+### HTML Content
+
+Toast supports rendering raw HTML in messages, titles, and descriptions using `Phoenix.HTML.raw/1`:
+
+```elixir
+# Basic HTML formatting
+Toast.send_toast(:info, Phoenix.HTML.raw("<strong>Bold</strong> and <em>italic</em> text"))
+
+# Rich HTML content
+Toast.send_toast(:success, Phoenix.HTML.raw("Payment processed"),
+  title: Phoenix.HTML.raw("Transaction <em>Complete</em>"),
+  description: Phoenix.HTML.raw("ID: <code>TXN-12345</code>")
+)
+
+# Mixed content (some fields escaped, some raw)
+Toast.send_toast(:info, "This is escaped: <script>",
+  description: Phoenix.HTML.raw("This is <strong>HTML</strong>")
+)
+```
+
+**⚠️ Security Warning**: Only use `Phoenix.HTML.raw/1` with trusted content. Never render user-generated HTML without proper sanitization as it can lead to XSS vulnerabilities.
+
 ### Update Existing Toasts
 
 Update a toast after it's displayed:
