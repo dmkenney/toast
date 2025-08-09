@@ -2,7 +2,7 @@ defmodule Toast do
   @moduledoc """
   Server-rendered toast notifications for Phoenix LiveView.
 
-  Toast is a notification system for Phoenix LiveView that works as a drop-in replacement for your 
+  Toast is a notification system for Phoenix LiveView that works as a drop-in replacement for your
   existing flash messages. It provides three ways to show notifications:
 
   1. **Toast messages** - Call `Toast.send_toast()` from your LiveView to show rich, interactive notifications
@@ -26,7 +26,7 @@ defmodule Toast do
       # Note: The import path may vary depending on your project structure
       # For assets in the root directory:
       import Toast from "../deps/toast/assets/js/toast.js";
-      
+
       # For assets in nested folders (e.g., assets/js/app.js):
       import Toast from "../../deps/toast/assets/js/toast.js";
 
@@ -39,7 +39,7 @@ defmodule Toast do
       /* Note: The import path may vary depending on your project structure */
       /* For assets in the root directory: */
       @import "../deps/toast/assets/css/toast.css";
-      
+
       /* For assets in nested folders (e.g., assets/css/app.css): */
       @import "../../deps/toast/assets/css/toast.css";
 
@@ -64,7 +64,7 @@ defmodule Toast do
   Or use the pipe-friendly version:
 
       def handle_event("save", _params, socket) do
-        {:noreply, 
+        {:noreply,
          socket
          |> assign(:saved, true)
          |> Toast.put_toast(:success, "Changes saved!")}
@@ -74,7 +74,7 @@ defmodule Toast do
 
   - `:info` - Blue informational messages
   - `:success` - Green success messages
-  - `:error` - Red error messages  
+  - `:error` - Red error messages
   - `:warning` - Yellow warning messages
   - `:loading` - Loading state with spinner
   - `:default` - Default neutral style
@@ -106,7 +106,7 @@ defmodule Toast do
         description: Phoenix.HTML.raw("Transaction ID: <code>TXN-12345</code>")
       )
 
-  **⚠️ Security Warning**: Only use `Phoenix.HTML.raw/1` with trusted content. Never render 
+  **⚠️ Security Warning**: Only use `Phoenix.HTML.raw/1` with trusted content. Never render
   user-generated HTML without proper sanitization as it can lead to XSS vulnerabilities.
 
   See the documentation for `send_toast/3` for all available options.
@@ -206,16 +206,24 @@ defmodule Toast do
 
   ## HTML Content
 
-  You can render raw HTML in any text field using `Phoenix.HTML.raw/1`:
+  You can render HEEX a template in any field by using the `~H` sigil.
+  There is only one requirement when doing so: you **must** make `assigns` available.
+
+  In this example, `assigns` is available via destructuring:
+
+        def handle_event("show_toast", _params, %{assigns: assigns} = socket) do
+          Toast.send_toast(:info, ~H"<strong>Bold</strong> text")
+        end
+
+  You can also render raw HTML in any text field using `Phoenix.HTML.raw/1`:
+  **Security Note**: Only use `Phoenix.HTML.raw/1` with trusted content to avoid XSS and other injection attacks.
 
       Toast.send_toast(:info, Phoenix.HTML.raw("<strong>Bold</strong> text"))
-      
+
       Toast.send_toast(:success, Phoenix.HTML.raw("Check the <a href='/docs'>docs</a>"),
         title: Phoenix.HTML.raw("<em>Success!</em>"),
         description: Phoenix.HTML.raw("Transaction: <code>ABC-123</code>")
       )
-
-  **Security Note**: Only use `Phoenix.HTML.raw/1` with trusted content to avoid XSS attacks.
   """
   def send_toast(type, message, opts \\ []) do
     toast = build_toast(type, message, opts)

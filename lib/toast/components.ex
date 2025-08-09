@@ -5,6 +5,10 @@ defmodule Toast.Components do
 
   use Phoenix.Component
 
+  @doc false
+  defguard is_heex_template(content)
+    when is_struct(content, Phoenix.LiveView.Rendered)
+
   @doc """
   Renders an individual toast notification.
   """
@@ -196,6 +200,10 @@ defmodule Toast.Components do
     safe_content
   end
 
+  defp render_content(content) when is_heex_template(content) do
+    content
+  end
+
   defp render_content(content) when is_binary(content) do
     content
   end
@@ -217,7 +225,7 @@ defmodule Toast.Components do
     ~H"""
     <div class={["flash-messages", "flash-position-#{@position}"]} data-theme={@theme} data-rich-colors={to_string(@rich_colors)}>
       <%= for {type, message} <- @flash do %>
-        <div class={["toast", "toast-flash", "toast-#{flash_type_to_toast_type(type)}"]} 
+        <div class={["toast", "toast-flash", "toast-#{flash_type_to_toast_type(type)}"]}
              id={"flash-#{type}-#{System.unique_integer([:positive])}"}
              data-flash-key={type}
              data-flash-type={type}
