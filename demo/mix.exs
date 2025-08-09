@@ -54,7 +54,7 @@ defmodule ToastDemo.MixProject do
       {:telemetry_poller, "~> 1.0"},
       {:jason, "~> 1.2"},
       {:bandit, "~> 1.5"},
-      {:toast, "~> 0.2.0"},
+      {:toast, path: "../"},
       {:live_debugger, "~> 0.3.0", only: :dev}
     ]
   end
