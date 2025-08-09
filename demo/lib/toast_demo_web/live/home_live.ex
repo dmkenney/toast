@@ -466,35 +466,31 @@ defmodule ToastDemoWeb.HomeLive do
     {:noreply, socket}
   end
 
-  def handle_event("show_html_toast", %{"variant" => variant}, socket) do
+  def handle_event("show_html_toast", %{"variant" => variant}, %{assigns: assigns} = socket) do
     case variant do
       "basic" ->
         Toast.send_toast(
           :info,
-          Phoenix.HTML.raw(
-            "<strong>Bold text</strong>, <em>italic text</em>, and <u>underlined text</u>"
-          )
+          ~H"<strong>Bold text</strong>, <em>italic text</em>, and <u>underlined text</u>"
         )
 
       "rich" ->
         Toast.send_toast(
           :success,
-          Phoenix.HTML.raw(
-            "Check out the <a href='https://hexdocs.pm/toast' target='_blank' style='color: #3b82f6; text-decoration: underline;'>documentation</a>"
-          ),
-          title: Phoenix.HTML.raw("HTML <em>Support</em>"),
+          ~H"Check out the <a href='https://hexdocs.pm/toast' target='_blank' style='color: #3b82f6; text-decoration: underline;'>documentation</a>",
+          title: ~H"HTML <em>Support</em>",
           description:
-            Phoenix.HTML.raw(
-              "You can use <code style='background: #f3f4f6; padding: 2px 4px; border-radius: 3px;'>Phoenix.HTML.raw()</code> for rich content"
-            )
+          ~H"""
+            You can use <code style='background: #f3f4f6; padding: 2px 4px; border-radius: 3px;'>Phoenix.HTML.raw()</code> or HEEX templates for rich content
+          """
         )
 
       "code" ->
         Toast.send_toast(
           :info,
-          Phoenix.HTML.raw(
-            "Transaction ID: <code style='background: #1e293b; color: #94a3b8; padding: 4px 8px; border-radius: 4px; font-family: monospace;'>TXN-12345-ABCDE</code>"
-          ),
+          ~H"""
+            Transaction ID: <code style='background: #1e293b; color: #94a3b8; padding: 4px 8px; border-radius: 4px; font-family: monospace;'>TXN-12345-ABCDE</code>
+          """,
           title: "Payment Processed",
           duration: 8000
         )
@@ -505,7 +501,7 @@ defmodule ToastDemoWeb.HomeLive do
           "This message is escaped: <b>Not Bold</b>",
           title: "Mixed content example",
           description:
-            Phoenix.HTML.raw("But this description has <strong>HTML formatting</strong>!")
+            ~H"But this description has <strong>HTML formatting</strong>!"
         )
     end
 
@@ -655,7 +651,7 @@ defmodule ToastDemoWeb.HomeLive do
   end
 
   def handle_info({:async_result, id, "error"}, socket) do
-    # Clear the loading toast  
+    # Clear the loading toast
     Toast.clear_toast(id)
 
     # Show error toast
