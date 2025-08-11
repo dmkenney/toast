@@ -379,9 +379,33 @@ defmodule ToastDemoWeb.HomeLive do
               >
                 Mixed Safe/Unsafe
               </button>
+              <div class="col-span-2">
+                <h2 class="text-2xl font-semibold mb-4 col-span-2">Dynamic HTML Content</h2>
+                <span>
+                  You can create dynamic HTML content by utilizing HEEX or
+                  <code>Phoenix.HTML.raw()</code>
+                  templates.
+                </span>
+              </div>
+              <.form
+                for={@form}
+                phx-submit="show_dynamic_input"
+                class="col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4"
+              >
+                <.input type="text" field={@form[:test_message]} />
+                <button
+                  type="submit"
+                  class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+                >
+                  Dynamic Input
+                </button>
+              </.form>
             </div>
             <p class="text-sm text-gray-500 mt-2">
-              ⚠️ HTML content must be wrapped with Phoenix.HTML.raw() - only use with trusted content!
+              ⚠️ There is a significant risk of introducing XSS attacks when using
+              <code>Phoenix.HTML.raw()</code>
+              - only use with trusted content!<br />
+              If you want to create dynamic content <code>Phoenix.HTML.raw()</code>, wrap your dynamic values with <code>Phoenix.HTML.html_escape()</code>.
             </p>
           </section>
 
@@ -442,7 +466,8 @@ defmodule ToastDemoWeb.HomeLive do
        theme: "light",
        rich_colors: true,
        animation_duration: 400,
-       current_path: ~p"/"
+       current_path: ~p"/",
+       form: to_form(%{"test_message" => "change me"})
      )}
   end
 
@@ -466,37 +491,44 @@ defmodule ToastDemoWeb.HomeLive do
     {:noreply, socket}
   end
 
-  def handle_event("show_html_toast", %{"variant" => variant}, socket) do
+  def handle_event("show_html_toast", %{"variant" => variant}, %{assigns: assigns} = socket) do
     case variant do
       "basic" ->
         Toast.send_toast(
           :info,
-          Phoenix.HTML.raw(
-            "<strong>Bold text</strong>, <em>italic text</em>, and <u>underlined text</u>"
-          )
+          ~H"<strong>Bold text</strong>, <em>italic text</em>, and <u>underlined text</u>"
         )
 
       "rich" ->
         Toast.send_toast(
           :success,
-          Phoenix.HTML.raw(
-            "Check out the <a href='https://hexdocs.pm/toast' target='_blank' style='color: #3b82f6; text-decoration: underline;'>documentation</a>"
-          ),
-          title: Phoenix.HTML.raw("HTML <em>Support</em>"),
-          description:
-            Phoenix.HTML.raw(
-              "You can use <code style='background: #f3f4f6; padding: 2px 4px; border-radius: 3px;'>Phoenix.HTML.raw()</code> for rich content"
-            )
+          ~H"""
+          Check out the
+          <a
+            href="https://hexdocs.pm/toast"
+            target="_blank"
+            style="color: #3b82f6; text-decoration: underline;"
+          >
+            documentation
+          </a>
+          """,
+          title: ~H"HTML <em>Support</em>",
+          description: ~H"""
+          You can use
+          <code style="background: #f3f4f6; padding: 2px 4px; border-radius: 3px;">Phoenix.HTML.raw()</code> or HEEX templates for rich content
+          """
         )
 
       "code" ->
         Toast.send_toast(
           :info,
-          Phoenix.HTML.raw(
-            "Transaction ID: <code style='background: #1e293b; color: #94a3b8; padding: 4px 8px; border-radius: 4px; font-family: monospace;'>TXN-12345-ABCDE</code>"
-          ),
-          title: "Payment Processed",
-          duration: 8000
+          ~H"""
+          Transaction ID:
+          <code style="background: #1e293b; color: #94a3b8; padding: 4px 8px; border-radius: 4px; font-family: monospace;">
+            TXN-12345-ABCDE
+          </code>
+          """,
+          title: "Payment Processed"
         )
 
       "mixed" ->
@@ -504,10 +536,23 @@ defmodule ToastDemoWeb.HomeLive do
           :warning,
           "This message is escaped: <b>Not Bold</b>",
           title: "Mixed content example",
-          description:
-            Phoenix.HTML.raw("But this description has <strong>HTML formatting</strong>!")
+          description: ~H"But this description has <strong>HTML formatting</strong>!"
         )
     end
+
+    {:noreply, socket}
+  end
+
+  def handle_event("show_dynamic_input", %{"test_message" => test_message}, socket) do
+    # heex templates requires an `assigns` map
+    assigns = %{test_message: test_message}
+
+    Toast.send_toast(
+      :info,
+      ~H"You said: <strong>{@test_message}</strong>",
+      title: "Message Recieved!"
+    )
+    |> IO.inspect()
 
     {:noreply, socket}
   end
@@ -655,7 +700,7 @@ defmodule ToastDemoWeb.HomeLive do
   end
 
   def handle_info({:async_result, id, "error"}, socket) do
-    # Clear the loading toast  
+    # Clear the loading toast
     Toast.clear_toast(id)
 
     # Show error toast
