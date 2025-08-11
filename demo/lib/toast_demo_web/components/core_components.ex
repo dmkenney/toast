@@ -162,6 +162,21 @@ defmodule ToastDemoWeb.CoreComponents do
     """
   end
 
+  attr :field, Phoenix.HTML.FormField
+  attr :rest, :global, include: ~w(type)
+
+  def input(assigns) do
+    ~H"""
+    <input
+      class="shadow-xs flex h-9 w-full rounded-md border border-gray-400 bg-transparent px-3 py-1 text-sm shadow-sm"
+      id={@field.id}
+      name={@field.name}
+      value={@field.value}
+      {@rest}
+    />
+    """
+  end
+
   ## JS Commands
 
   def show(js \\ %JS{}, selector) do

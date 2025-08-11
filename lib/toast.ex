@@ -215,14 +215,23 @@ defmodule Toast do
           Toast.send_toast(:info, ~H"<strong>Bold</strong> text")
         end
 
+  Or you can just create an empty `assigns` map.
+
+        def handle_event("show_toast", _params, socket) do
+          assigns = %{}
+          Toast.send_toast(:info, ~H"<strong>Bold</strong> text")
+        end
+
   You can also render raw HTML in any text field using `Phoenix.HTML.raw/1`:
   **Security Note**: Only use `Phoenix.HTML.raw/1` with trusted content to avoid XSS and other injection attacks.
+  If you use `Phoenix.HTML.raw/1` with dynamic or user input, you can wrap content with `Phoenix.HTML.html_escape/1` to make it safe.
 
       Toast.send_toast(:info, Phoenix.HTML.raw("<strong>Bold</strong> text"))
 
       Toast.send_toast(:success, Phoenix.HTML.raw("Check the <a href='/docs'>docs</a>"),
         title: Phoenix.HTML.raw("<em>Success!</em>"),
-        description: Phoenix.HTML.raw("Transaction: <code>ABC-123</code>")
+        # use html_escape to prevent xss vulnerablilites
+        description: Phoenix.HTML.raw("Transaction: <code>"<> Phoenix.HTML.html_escape(transaction_value) <>"</code>")
       )
   """
   def send_toast(type, message, opts \\ []) do
