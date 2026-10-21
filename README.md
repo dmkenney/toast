@@ -157,6 +157,35 @@ Configure the toast container with these attributes:
 | `rich_colors` | boolean | `false` | Use more vibrant colors for toast types |
 | `max_toasts` | integer | `3` | Maximum number of visible toasts |
 | `animation_duration` | integer | `400` | Duration of animations in milliseconds |
+| `connection_toasts` | boolean | `false` | Show an error toast while the LiveView is disconnected |
+| `client_error_title` | string | `"We can't find the internet"` | Title when the client loses its connection |
+| `client_error_message` | string | `"Attempting to reconnect"` | Message when the client loses its connection |
+| `server_error_title` | string | `"Something went wrong!"` | Title when the server crashes |
+| `server_error_message` | string | `"Hang in there while we get back on track"` | Message when the server crashes |
+
+### Connection Toasts
+
+Phoenix's generated layouts show `#client-error` and `#server-error` flashes when the
+LiveView loses its connection. Set `connection_toasts` to show these as toasts instead,
+then remove the two `<.flash>` elements from your layout:
+
+```heex
+<Toast.toast_group flash={@flash} connection_toasts={true} />
+```
+
+They use the same `phx-disconnected` and `phx-connected` bindings as Phoenix, so they
+show while disconnected and hide on reconnect. Pass your own text to translate them:
+
+```heex
+<Toast.toast_group
+  flash={@flash}
+  connection_toasts={true}
+  client_error_title={gettext("We can't find the internet")}
+  client_error_message={gettext("Attempting to reconnect")}
+  server_error_title={gettext("Something went wrong!")}
+  server_error_message={gettext("Hang in there while we get back on track")}
+/>
+```
 
 ### Individual Toast Options
 

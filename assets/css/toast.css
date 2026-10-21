@@ -676,6 +676,19 @@
   opacity: 1 !important;
 }
 
+/* Connection toasts stay hidden until LiveView shows them */
+.toast-connection-group {
+  display: contents;
+}
+
+.toast-connection[hidden] {
+  display: none;
+}
+
+.toast-connection .toast-icon svg {
+  animation: spin 1s linear infinite;
+}
+
 /* Animation for slide-in-right */
 @keyframes slide-in-right {
   from {

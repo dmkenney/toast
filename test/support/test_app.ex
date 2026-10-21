@@ -68,6 +68,16 @@ defmodule Toast.TestApp do
     end
   end
 
+  defmodule ConnectionLive do
+    use Phoenix.LiveView
+
+    def render(assigns) do
+      ~H"""
+      <Toast.toast_group flash={@flash} connection_toasts={true} client_error_title="Offline" />
+      """
+    end
+  end
+
   defmodule Router do
     use Phoenix.Router
     import Phoenix.LiveView.Router
@@ -82,6 +92,7 @@ defmodule Toast.TestApp do
       pipe_through(:browser)
       live("/source", SourceLive)
       live("/target", TargetLive)
+      live("/connection", ConnectionLive)
     end
   end
 
