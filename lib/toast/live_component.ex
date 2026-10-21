@@ -153,25 +153,29 @@ defmodule Toast.LiveComponent do
      |> assign(:toast_count, 0)}
   end
 
-  def handle_event("action", %{"toast_id" => toast_id, "action" => action}, socket) do
-    # Parse the JSON action string
-    action =
-      case Jason.decode(action) do
-        {:ok, decoded} -> decoded
-        _ -> nil
-      end
+  def handle_event("action", %{"toast_id" => toast_id}, socket) do
+    # Use the action stored on the server. The copy in the page can be edited,
+    # and turning its event name into an atom would let a client create atoms.
+    case socket.assigns.toasts_by_id do
+      %{^toast_id => %{action: %{} = action}} ->
+        event = action[:event] || action["event"]
+        # Params arrive with string keys, as they did when read from the page.
+        params =
+          (action[:params] || action["params"] || %{}) |> Jason.encode!() |> Jason.decode!()
 
-    if action do
-      event = action["event"]
-      params = action["params"] || %{}
+        # Send the event to the parent LiveView
+        send(self(), {to_event(event), params})
 
-      # Send the event to the parent LiveView
-      send(self(), {String.to_atom(event), params})
+      _ ->
+        :ok
     end
 
     # Remove the toast after action
     {:noreply, delete_toast(socket, toast_id)}
   end
+
+  defp to_event(event) when is_atom(event), do: event
+  defp to_event(event) when is_binary(event), do: String.to_atom(event)
 
   defp update_toast(socket, id, updates) do
     case socket.assigns.toasts_by_id do

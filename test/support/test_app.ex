@@ -65,6 +65,7 @@ defmodule Toast.TestApp do
     def render(assigns) do
       ~H"""
       <h1>Source</h1>
+      <p :if={assigns[:last_action]} id="last-action">{inspect(@last_action)}</p>
       <.live_component module={Toast.TestApp.ToastComponent} id="toast-component" />
       """
     end
@@ -111,6 +112,19 @@ defmodule Toast.TestApp do
 
     def handle_event("toast_with_id", %{"message" => message}, socket) do
       {:noreply, Toast.put_toast(socket, :info, message, id: "save-toast")}
+    end
+
+    def handle_event("toast_with_action", _params, socket) do
+      Toast.send_toast(:info, "Deleted",
+        id: "act",
+        action: %{label: "Undo", event: "undo", params: %{id: 1}}
+      )
+
+      {:noreply, socket}
+    end
+
+    def handle_info(message, socket) do
+      {:noreply, assign(socket, :last_action, message)}
     end
 
     def handle_event("rerender", _params, socket) do
