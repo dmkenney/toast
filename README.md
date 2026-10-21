@@ -166,7 +166,7 @@ Configure the toast container with these attributes:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `position` | string | `"bottom-right"` | Position of toasts: `"top-left"`, `"top-center"`, `"top-right"`, `"bottom-left"`, `"bottom-center"`, `"bottom-right"` |
-| `theme` | string | `"light"` | Theme style: `"light"`, `"dark"`, or `"system"` (follows the OS light/dark setting via `prefers-color-scheme`) |
+| `theme` | string | `"light"` | `"light"` or `"dark"` always use that theme. `"system"` follows the page theme, then the OS (see [Themes](#themes)) |
 | `rich_colors` | boolean | `false` | Use more vibrant colors for toast types |
 | `max_toasts` | integer | `3` | Maximum number of visible toasts |
 | `animation_duration` | integer | `400` | Duration of animations in milliseconds |
@@ -176,6 +176,19 @@ Configure the toast container with these attributes:
 | `server_error_title` | string | `"Something went wrong!"` | Title when the server crashes |
 | `server_error_message` | string | `"Hang in there while we get back on track"` | Message when the server crashes |
 | `expanded` | boolean | `false` | Always show toasts expanded instead of stacked |
+
+### Themes
+
+`theme="light"` and `theme="dark"` ignore the page around them.
+
+`theme="system"` follows the page when it sets a theme, and the OS otherwise:
+
+- A `data-theme="dark"` attribute or `dark` class on an ancestor (such as `<html>`) gives dark toasts.
+- A `data-theme="light"` attribute on an ancestor gives light toasts, even when the OS is dark.
+- With neither, toasts follow the OS setting via `prefers-color-scheme`.
+
+This matches the light / dark / system toggle in Phoenix 1.8's generated layout, which sets
+`data-theme` on `<html>` and removes it for "system".
 
 ### Connection Toasts
 

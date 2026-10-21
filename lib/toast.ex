@@ -170,7 +170,7 @@ defmodule Toast do
   * `:id` - The ID of the toast group container (default: "toast-group")
   * `:flash` - The flash assigns from the socket
   * `:position` - Position of toasts: "top-left", "top-center", "top-right", "bottom-left", "bottom-center", "bottom-right" (default: "bottom-right")
-  * `:theme` - Theme: "light", "dark", or "system" to follow the OS color scheme (default: "light")
+  * `:theme` - Theme: "light", "dark", or "system" to follow the page's `data-theme`/`.dark`, then the OS color scheme (default: "light")
   * `:rich_colors` - Whether to use rich colors for different toast types (default: false)
   * `:max_toasts` - Maximum number of toasts to display (default: 3)
   * `:animation_duration` - Duration of animations in milliseconds (default: 400)
