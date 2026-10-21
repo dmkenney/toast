@@ -19,6 +19,10 @@ defmodule Toast.LiveComponent do
   - `"clear-flash"` - Removes a flash message
   - `"clear-all"` - Removes all toasts
   - `"action"` - Handles toast action button clicks
+
+  It also accepts `:update_toast` via `send_update/3` (see `Toast.update_toast/2`).
+  A map of toast structs by ID is kept alongside the stream so updates can be
+  merged into the existing toast.
   """
 
   use Phoenix.LiveComponent
@@ -31,6 +35,7 @@ defmodule Toast.LiveComponent do
      socket
      |> stream(:toasts, [])
      |> assign(:toast_count, 0)
+     |> assign(:toasts_by_id, %{})
      |> assign(:max_toasts, nil)
      |> assign(:flash_messages, %{})}
   end
@@ -56,16 +61,21 @@ defmodule Toast.LiveComponent do
         toast = assigns[:toast] ->
           socket
           |> stream_insert(:toasts, toast, at: 0)
+          |> update(:toasts_by_id, &Map.put(&1, toast.id, toast))
           |> update(:toast_count, &(&1 + 1))
+
+        update = assigns[:update_toast] ->
+          update_toast(socket, update.id, update.updates)
 
         id = assigns[:clear] ->
           socket
-          |> stream_delete(:toasts, %{id: id})
+          |> delete_toast(id)
           |> update(:toast_count, &max(&1 - 1, 0))
 
         assigns[:clear_all] ->
           socket
           |> stream(:toasts, [], reset: true)
+          |> assign(:toasts_by_id, %{})
           |> assign(:toast_count, 0)
 
         true ->
@@ -106,7 +116,7 @@ defmodule Toast.LiveComponent do
 
   @impl true
   def handle_event("clear", %{"id" => id}, socket) do
-    {:noreply, stream_delete(socket, :toasts, %{id: id})}
+    {:noreply, delete_toast(socket, id)}
   end
 
   def handle_event("clear-flash", %{"key" => key}, socket) do
@@ -119,6 +129,7 @@ defmodule Toast.LiveComponent do
     {:noreply,
      socket
      |> stream(:toasts, [], reset: true)
+     |> assign(:toasts_by_id, %{})
      |> assign(:toast_count, 0)}
   end
 
@@ -139,7 +150,27 @@ defmodule Toast.LiveComponent do
     end
 
     # Remove the toast after action
-    {:noreply, stream_delete(socket, :toasts, %{id: toast_id})}
+    {:noreply, delete_toast(socket, toast_id)}
+  end
+
+  defp update_toast(socket, id, updates) do
+    case socket.assigns.toasts_by_id do
+      %{^id => toast} ->
+        toast = struct(toast, Map.delete(Map.new(updates), :id))
+
+        socket
+        |> stream_insert(:toasts, toast)
+        |> update(:toasts_by_id, &Map.put(&1, id, toast))
+
+      _ ->
+        socket
+    end
+  end
+
+  defp delete_toast(socket, id) do
+    socket
+    |> stream_delete(:toasts, %{id: id})
+    |> update(:toasts_by_id, &Map.delete(&1, id))
   end
 
   defp update_flash_messages(socket, new_flash) do

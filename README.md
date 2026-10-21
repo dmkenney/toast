@@ -250,6 +250,8 @@ Toast.update_toast("upload-toast",
 )
 ```
 
+The toast is re-rendered in place. A new `duration` restarts its timer. Updating an ID that is no longer showing does nothing.
+
 ### Clear Toasts
 
 Remove toasts programmatically:
