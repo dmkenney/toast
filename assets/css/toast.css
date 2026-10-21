@@ -20,40 +20,40 @@
 }
 
 /* Position classes */
-.toast-position-top-left {
+:where(.live-toast-group).toast-position-top-left {
   top: 16px;
   left: 16px;
 }
 
-.toast-position-top-center {
+:where(.live-toast-group).toast-position-top-center {
   top: 16px;
   left: 50%;
   transform: translateX(-50%);
 }
 
-.toast-position-top-right {
+:where(.live-toast-group).toast-position-top-right {
   top: 16px;
   right: 16px;
 }
 
-.toast-position-bottom-left {
+:where(.live-toast-group).toast-position-bottom-left {
   bottom: 16px;
   left: 16px;
 }
 
-.toast-position-bottom-center {
+:where(.live-toast-group).toast-position-bottom-center {
   bottom: 16px;
   left: 50%;
   transform: translateX(-50%);
 }
 
-.toast-position-bottom-right {
+:where(.live-toast-group).toast-position-bottom-right {
   bottom: 16px;
   right: 16px;
 }
 
 /* Base toast styling */
-.toast {
+:where(.live-toast-group) .toast {
   --toast-bg: #fff;
   --toast-color: hsl(0, 0%, 9%);
   --toast-border: hsl(0, 0%, 93%);
@@ -90,76 +90,76 @@
 }
 
 /* Top positions use relative positioning for front toast */
-.toast-position-top-left .toast[data-mounted="true"][data-expanded="false"][data-front="true"],
-.toast-position-top-center .toast[data-mounted="true"][data-expanded="false"][data-front="true"],
-.toast-position-top-right .toast[data-mounted="true"][data-expanded="false"][data-front="true"] {
+:where(.live-toast-group).toast-position-top-left .toast[data-mounted="true"][data-expanded="false"][data-front="true"],
+:where(.live-toast-group).toast-position-top-center .toast[data-mounted="true"][data-expanded="false"][data-front="true"],
+:where(.live-toast-group).toast-position-top-right .toast[data-mounted="true"][data-expanded="false"][data-front="true"] {
   position: relative;
   margin-bottom: 8px;
 }
 
 /* Add padding-right when close button is present */
-.toast:has(.toast-close) {
+:where(.live-toast-group) .toast:has(.toast-close) {
   padding-right: 28px;
 }
 
 
 /* Transform variable */
-.toast {
+:where(.live-toast-group) .toast {
   --y: translateY(0);
   --lift-amount: calc(var(--lift) * 14px);
   transform: var(--y);
 }
 
 /* Lift direction based on position */
-.toast-position-top-left .toast,
-.toast-position-top-center .toast,
-.toast-position-top-right .toast {
+:where(.live-toast-group).toast-position-top-left .toast,
+:where(.live-toast-group).toast-position-top-center .toast,
+:where(.live-toast-group).toast-position-top-right .toast {
   --lift: 1;
 }
 
-.toast-position-bottom-left .toast,
-.toast-position-bottom-center .toast,
-.toast-position-bottom-right .toast {
+:where(.live-toast-group).toast-position-bottom-left .toast,
+:where(.live-toast-group).toast-position-bottom-center .toast,
+:where(.live-toast-group).toast-position-bottom-right .toast {
   --lift: -1;
 }
 
 /* Default state - off screen */
-.toast:not([data-mounted="true"]) {
+:where(.live-toast-group) .toast:not([data-mounted="true"]) {
   opacity: 0;
   transform: translateY(100%);
   z-index: 9999; /* Ensure new toasts start on top */
 }
 
 /* Top positions - slide from top */
-.toast-position-top-left .toast:not([data-mounted="true"]),
-.toast-position-top-center .toast:not([data-mounted="true"]),
-.toast-position-top-right .toast:not([data-mounted="true"]) {
+:where(.live-toast-group).toast-position-top-left .toast:not([data-mounted="true"]),
+:where(.live-toast-group).toast-position-top-center .toast:not([data-mounted="true"]),
+:where(.live-toast-group).toast-position-top-right .toast:not([data-mounted="true"]) {
   transform: translateY(-100%);
 }
 
 /* Mounted state */
-.toast[data-mounted="true"] {
+:where(.live-toast-group) .toast[data-mounted="true"] {
   opacity: 1;
 }
 
 /* Front toast when not expanded */
-.toast[data-mounted="true"][data-expanded="false"][data-front="true"] {
+:where(.live-toast-group) .toast[data-mounted="true"][data-expanded="false"][data-front="true"] {
   transform: translateY(0);
 }
 
 /* Stacked toasts when not expanded - bottom positions */
-.toast-position-bottom-left .toast[data-mounted="true"][data-expanded="false"][data-front="false"],
-.toast-position-bottom-center .toast[data-mounted="true"][data-expanded="false"][data-front="false"],
-.toast-position-bottom-right .toast[data-mounted="true"][data-expanded="false"][data-front="false"] {
+:where(.live-toast-group).toast-position-bottom-left .toast[data-mounted="true"][data-expanded="false"][data-front="false"],
+:where(.live-toast-group).toast-position-bottom-center .toast[data-mounted="true"][data-expanded="false"][data-front="false"],
+:where(.live-toast-group).toast-position-bottom-right .toast[data-mounted="true"][data-expanded="false"][data-front="false"] {
   --stacked-scale: calc(1 - var(--toasts-before) * 0.06);
   transform: translateY(calc(var(--lift-amount) * var(--toasts-before))) scale(var(--stacked-scale));
   height: var(--front-toast-height) !important;
 }
 
 /* Stacked toasts when not expanded - top positions */
-.toast-position-top-left .toast[data-mounted="true"][data-expanded="false"][data-front="false"],
-.toast-position-top-center .toast[data-mounted="true"][data-expanded="false"][data-front="false"],
-.toast-position-top-right .toast[data-mounted="true"][data-expanded="false"][data-front="false"] {
+:where(.live-toast-group).toast-position-top-left .toast[data-mounted="true"][data-expanded="false"][data-front="false"],
+:where(.live-toast-group).toast-position-top-center .toast[data-mounted="true"][data-expanded="false"][data-front="false"],
+:where(.live-toast-group).toast-position-top-right .toast[data-mounted="true"][data-expanded="false"][data-front="false"] {
   position: absolute;
   top: 0;
   --stacked-scale: calc(1 - var(--toasts-before) * 0.06);
@@ -168,27 +168,27 @@
 }
 
 /* Hide content of stacked toasts */
-.toast[data-expanded="false"][data-front="false"] > * {
+:where(.live-toast-group) .toast[data-expanded="false"][data-front="false"] > * {
   opacity: 0;
 }
 
 /* Smooth transitions for toast content */
-.toast > * {
+:where(.live-toast-group) .toast > * {
   transition: opacity var(--toast-animation-duration) ease;
 }
 
 /* All toasts when expanded (hovering) - bottom positions */
-.toast-position-bottom-left .toast[data-mounted="true"][data-expanded="true"],
-.toast-position-bottom-center .toast[data-mounted="true"][data-expanded="true"],
-.toast-position-bottom-right .toast[data-mounted="true"][data-expanded="true"] {
+:where(.live-toast-group).toast-position-bottom-left .toast[data-mounted="true"][data-expanded="true"],
+:where(.live-toast-group).toast-position-bottom-center .toast[data-mounted="true"][data-expanded="true"],
+:where(.live-toast-group).toast-position-bottom-right .toast[data-mounted="true"][data-expanded="true"] {
   transform: translateY(calc(var(--lift) * var(--offset)));
   height: auto;
 }
 
 /* All toasts when expanded (hovering) - top positions */
-.toast-position-top-left .toast[data-mounted="true"][data-expanded="true"],
-.toast-position-top-center .toast[data-mounted="true"][data-expanded="true"],
-.toast-position-top-right .toast[data-mounted="true"][data-expanded="true"] {
+:where(.live-toast-group).toast-position-top-left .toast[data-mounted="true"][data-expanded="true"],
+:where(.live-toast-group).toast-position-top-center .toast[data-mounted="true"][data-expanded="true"],
+:where(.live-toast-group).toast-position-top-right .toast[data-mounted="true"][data-expanded="true"] {
   position: absolute;
   top: 0;
   transform: translateY(calc(var(--lift) * var(--offset)));
@@ -197,12 +197,12 @@
 }
 
 /* All toasts content visible when expanded */
-.toast[data-expanded="true"] > * {
+:where(.live-toast-group) .toast[data-expanded="true"] > * {
   opacity: 1;
 }
 
 /* Add pseudo-element to fill gaps between toasts when expanded */
-.toast[data-expanded="true"]::after {
+:where(.live-toast-group) .toast[data-expanded="true"]::after {
   content: '';
   position: absolute;
   left: -10px; /* Extend beyond toast edges */
@@ -213,15 +213,15 @@
 }
 
 /* Position pseudo-element based on toast position */
-.toast-position-bottom-left .toast[data-expanded="true"]::after,
-.toast-position-bottom-center .toast[data-expanded="true"]::after,
-.toast-position-bottom-right .toast[data-expanded="true"]::after {
+:where(.live-toast-group).toast-position-bottom-left .toast[data-expanded="true"]::after,
+:where(.live-toast-group).toast-position-bottom-center .toast[data-expanded="true"]::after,
+:where(.live-toast-group).toast-position-bottom-right .toast[data-expanded="true"]::after {
   bottom: 100%;
 }
 
-.toast-position-top-left .toast[data-expanded="true"]::after,
-.toast-position-top-center .toast[data-expanded="true"]::after,
-.toast-position-top-right .toast[data-expanded="true"]::after {
+:where(.live-toast-group).toast-position-top-left .toast[data-expanded="true"]::after,
+:where(.live-toast-group).toast-position-top-center .toast[data-expanded="true"]::after,
+:where(.live-toast-group).toast-position-top-right .toast[data-expanded="true"]::after {
   top: 100%;
 }
 
@@ -231,9 +231,9 @@
 }
 
 /* Also add hover area for front toast when collapsed - only extend upward for bottom positions */
-.toast-position-bottom-left .toast[data-mounted="true"][data-expanded="false"][data-front="true"]::after,
-.toast-position-bottom-center .toast[data-mounted="true"][data-expanded="false"][data-front="true"]::after,
-.toast-position-bottom-right .toast[data-mounted="true"][data-expanded="false"][data-front="true"]::after {
+:where(.live-toast-group).toast-position-bottom-left .toast[data-mounted="true"][data-expanded="false"][data-front="true"]::after,
+:where(.live-toast-group).toast-position-bottom-center .toast[data-mounted="true"][data-expanded="false"][data-front="true"]::after,
+:where(.live-toast-group).toast-position-bottom-right .toast[data-mounted="true"][data-expanded="false"][data-front="true"]::after {
   content: '';
   position: absolute;
   left: -20px;
@@ -244,9 +244,9 @@
 }
 
 /* For top positions, only extend downward */
-.toast-position-top-left .toast[data-mounted="true"][data-expanded="false"][data-front="true"]::after,
-.toast-position-top-center .toast[data-mounted="true"][data-expanded="false"][data-front="true"]::after,
-.toast-position-top-right .toast[data-mounted="true"][data-expanded="false"][data-front="true"]::after {
+:where(.live-toast-group).toast-position-top-left .toast[data-mounted="true"][data-expanded="false"][data-front="true"]::after,
+:where(.live-toast-group).toast-position-top-center .toast[data-mounted="true"][data-expanded="false"][data-front="true"]::after,
+:where(.live-toast-group).toast-position-top-right .toast[data-mounted="true"][data-expanded="false"][data-front="true"]::after {
   content: '';
   position: absolute;
   left: -20px;
@@ -257,50 +257,50 @@
 }
 
 /* Removed state */
-.toast[data-removed="true"] {
+:where(.live-toast-group) .toast[data-removed="true"] {
   transform: translateY(calc(var(--lift) * -100%));
   opacity: 0;
 }
 
 /* Position-specific transforms and positioning */
-.toast-position-top-left .toast,
-.toast-position-top-center .toast,
-.toast-position-top-right .toast {
+:where(.live-toast-group).toast-position-top-left .toast,
+:where(.live-toast-group).toast-position-top-center .toast,
+:where(.live-toast-group).toast-position-top-right .toast {
   transform-origin: center top;
   top: auto;
   bottom: auto;
 }
 
-.toast-position-bottom-left .toast,
-.toast-position-bottom-center .toast,
-.toast-position-bottom-right .toast {
+:where(.live-toast-group).toast-position-bottom-left .toast,
+:where(.live-toast-group).toast-position-bottom-center .toast,
+:where(.live-toast-group).toast-position-bottom-right .toast {
   transform-origin: center bottom;
   bottom: 0;
 }
 
 /* Toast types with rich colors */
-[data-rich-colors='true'] .toast-success {
+:where(.live-toast-group) [data-rich-colors='true'] .toast-success {
   --toast-bg: hsl(143, 85%, 96%);
   --toast-color: hsl(140, 100%, 27%);
   --toast-border: hsl(145, 92%, 87%);
   --toast-icon-color: hsl(140, 100%, 27%);
 }
 
-[data-rich-colors='true'] .toast-error {
+:where(.live-toast-group) [data-rich-colors='true'] .toast-error {
   --toast-bg: hsl(359, 100%, 97%);
   --toast-color: hsl(360, 100%, 45%);
   --toast-border: hsl(359, 100%, 94%);
   --toast-icon-color: hsl(360, 100%, 45%);
 }
 
-[data-rich-colors='true'] .toast-warning {
+:where(.live-toast-group) [data-rich-colors='true'] .toast-warning {
   --toast-bg: hsl(49, 100%, 97%);
   --toast-color: hsl(31, 92%, 45%);
   --toast-border: hsl(49, 91%, 84%);
   --toast-icon-color: hsl(31, 92%, 45%);
 }
 
-[data-rich-colors='true'] .toast-info {
+:where(.live-toast-group) [data-rich-colors='true'] .toast-info {
   --toast-bg: hsl(208, 100%, 97%);
   --toast-color: hsl(210, 92%, 45%);
   --toast-border: hsl(221, 91%, 93%);
@@ -308,23 +308,23 @@
 }
 
 /* Default icon colors without rich colors */
-.toast-success {
+:where(.live-toast-group) .toast-success {
   --toast-icon-color: hsl(140, 100%, 27%);
 }
 
-.toast-error {
+:where(.live-toast-group) .toast-error {
   --toast-icon-color: hsl(360, 100%, 45%);
 }
 
-.toast-warning {
+:where(.live-toast-group) .toast-warning {
   --toast-icon-color: hsl(31, 92%, 45%);
 }
 
-.toast-info {
+:where(.live-toast-group) .toast-info {
   --toast-icon-color: hsl(210, 92%, 45%);
 }
 
-.toast-loading {
+:where(.live-toast-group) .toast-loading {
   --toast-icon-color: hsl(0, 0%, 9%);
 }
 
@@ -382,7 +382,7 @@
 }
 
 /* Icons */
-.toast-icon {
+:where(.live-toast-group) .toast-icon {
   flex-shrink: 0;
   width: 20px;
   height: 20px;
@@ -390,13 +390,13 @@
   color: var(--toast-icon-color);
 }
 
-.toast-icon svg {
+:where(.live-toast-group) .toast-icon svg {
   width: 100%;
   height: 100%;
 }
 
 /* Loading spinner animation */
-.toast-loading .toast-icon svg {
+:where(.live-toast-group) .toast-loading .toast-icon svg {
   animation: spin 1s linear infinite;
 }
 
@@ -410,27 +410,27 @@
 }
 
 /* Content */
-.toast-content {
+:where(.live-toast-group) .toast-content {
   flex: 1;
   min-width: 0;
 }
 
 /* Center content and icon vertically when there's an inline action */
-.toast:has(.toast-action-inline) .toast-content,
-.toast:has(.toast-action-inline) .toast-icon {
+:where(.live-toast-group) .toast:has(.toast-action-inline) .toast-content,
+:where(.live-toast-group) .toast:has(.toast-action-inline) .toast-icon {
   align-self: center;
 }
 
-.toast-title {
+:where(.live-toast-group) .toast-title {
   font-weight: 600;
   margin-bottom: 2px;
 }
 
-.toast-message {
+:where(.live-toast-group) .toast-message {
   word-wrap: break-word;
 }
 
-.toast-description {
+:where(.live-toast-group) .toast-description {
   margin-top: 4px;
   color: #3f3f3f;
   font-size: 13px;
@@ -442,13 +442,13 @@
 }
 
 /* Actions */
-.toast-actions {
+:where(.live-toast-group) .toast-actions {
   margin-top: 8px;
   display: flex;
   gap: 8px;
 }
 
-.toast-action {
+:where(.live-toast-group) .toast-action {
   padding: 4px 12px;
   background: transparent;
   color: inherit;
@@ -460,16 +460,16 @@
   transition: all 150ms ease;
 }
 
-.toast-action:hover {
+:where(.live-toast-group) .toast-action:hover {
   background: rgba(0, 0, 0, 0.05);
 }
 
-.toast-action:active {
+:where(.live-toast-group) .toast-action:active {
   transform: scale(0.95);
 }
 
 /* Inline action button */
-.toast-action-inline {
+:where(.live-toast-group) .toast-action-inline {
   flex-shrink: 0;
   margin-left: auto;
   margin-right: 1px;
@@ -491,31 +491,31 @@
   color: #000;
 }
 
-.toast-action-inline:hover {
+:where(.live-toast-group) .toast-action-inline:hover {
   opacity: 0.9;
 }
 
-.toast-action-inline:active {
+:where(.live-toast-group) .toast-action-inline:active {
   transform: scale(0.95);
 }
 
 /* Rich colors for inline action buttons */
-[data-rich-colors='true'] .toast-success .toast-action-inline {
+:where(.live-toast-group) [data-rich-colors='true'] .toast-success .toast-action-inline {
   background: hsl(140, 100%, 27%);
   color: #fff;
 }
 
-[data-rich-colors='true'] .toast-error .toast-action-inline {
+:where(.live-toast-group) [data-rich-colors='true'] .toast-error .toast-action-inline {
   background: hsl(360, 100%, 45%);
   color: #fff;
 }
 
-[data-rich-colors='true'] .toast-warning .toast-action-inline {
+:where(.live-toast-group) [data-rich-colors='true'] .toast-warning .toast-action-inline {
   background: hsl(31, 92%, 45%);
   color: #fff;
 }
 
-[data-rich-colors='true'] .toast-info .toast-action-inline {
+:where(.live-toast-group) [data-rich-colors='true'] .toast-info .toast-action-inline {
   background: hsl(210, 92%, 45%);
   color: #fff;
 }
@@ -546,7 +546,7 @@
 }
 
 /* Close button */
-.toast-close {
+:where(.live-toast-group) .toast-close {
   position: absolute;
   top: 3px;
   right: 4px;
@@ -573,7 +573,7 @@
   color: #6b7280;
 }
 
-.toast-close:hover {
+:where(.live-toast-group) .toast-close:hover {
   color: #374151;
 }
 
@@ -583,19 +583,19 @@
 }
 
 /* Rich colors for close button */
-[data-rich-colors='true'] .toast-success .toast-close {
+:where(.live-toast-group) [data-rich-colors='true'] .toast-success .toast-close {
   color: hsl(140, 100%, 27%);
 }
 
-[data-rich-colors='true'] .toast-error .toast-close {
+:where(.live-toast-group) [data-rich-colors='true'] .toast-error .toast-close {
   color: hsl(360, 100%, 45%);
 }
 
-[data-rich-colors='true'] .toast-warning .toast-close {
+:where(.live-toast-group) [data-rich-colors='true'] .toast-warning .toast-close {
   color: hsl(31, 92%, 45%);
 }
 
-[data-rich-colors='true'] .toast-info .toast-close {
+:where(.live-toast-group) [data-rich-colors='true'] .toast-info .toast-close {
   color: hsl(210, 92%, 45%);
 }
 
@@ -722,25 +722,25 @@
 
 /* Responsive */
 @media (max-width: 640px) {
-  .toast {
+  :where(.live-toast-group) .toast {
     width: 100%;
   }
 }
 
 /* Accessibility */
-.toast:focus-visible {
+:where(.live-toast-group) .toast:focus-visible {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
 }
 
-.toast-action:focus-visible,
-.toast-close:focus-visible {
+:where(.live-toast-group) .toast-action:focus-visible,
+:where(.live-toast-group) .toast-close:focus-visible {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
 }
 
 /* Flash messages positioning */
-.flash-messages {
+:where(.live-toast-group) .flash-messages {
   position: relative;
   z-index: 50;
   pointer-events: auto;
@@ -748,60 +748,60 @@
 }
 
 /* Flash-specific toast modifications */
-.toast-flash {
+:where(.live-toast-group) .toast-flash {
   position: relative !important;
   margin-bottom: 8px;
   animation: slide-in-from-top 0.3s ease-out;
 }
 
 /* Animation based on position */
-.toast-position-bottom-left .toast-flash,
-.toast-position-bottom-center .toast-flash,
-.toast-position-bottom-right .toast-flash {
+:where(.live-toast-group).toast-position-bottom-left .toast-flash,
+:where(.live-toast-group).toast-position-bottom-center .toast-flash,
+:where(.live-toast-group).toast-position-bottom-right .toast-flash {
   animation: slide-in-from-bottom 0.3s ease-out;
 }
 
 /* Last flash message shouldn't have margin */
-.flash-messages .toast-flash:last-child {
+:where(.live-toast-group) .flash-messages .toast-flash:last-child {
   margin-bottom: 0;
 }
 
 /* Override absolute positioning behaviors for flash */
-.toast-flash[data-mounted="true"],
-.toast-flash[data-expanded="true"],
-.toast-flash[data-expanded="false"],
-.toast-flash[data-front="true"],
-.toast-flash[data-front="false"] {
+:where(.live-toast-group) .toast-flash[data-mounted="true"],
+:where(.live-toast-group) .toast-flash[data-expanded="true"],
+:where(.live-toast-group) .toast-flash[data-expanded="false"],
+:where(.live-toast-group) .toast-flash[data-front="true"],
+:where(.live-toast-group) .toast-flash[data-front="false"] {
   position: relative !important;
   transform: none !important;
   height: auto !important;
   margin-bottom: 8px;
 }
 
-.flash-messages .toast-flash:last-child {
+:where(.live-toast-group) .flash-messages .toast-flash:last-child {
   margin-bottom: 0;
 }
 
 /* Ensure flash message content is always visible */
-.toast-flash > * {
+:where(.live-toast-group) .toast-flash > * {
   opacity: 1 !important;
 }
 
 /* Connection toasts stay hidden until LiveView shows them */
-.toast-connection-group {
+:where(.live-toast-group) .toast-connection-group {
   display: contents;
 }
 
-.toast-connection[hidden] {
+:where(.live-toast-group) .toast-connection[hidden] {
   display: none;
 }
 
 /* Only one shows at a time, so drop the margin flash toasts use between them */
-.toast-connection-group .toast-flash {
+:where(.live-toast-group) .toast-connection-group .toast-flash {
   margin-bottom: 0;
 }
 
-.toast-connection .toast-icon svg {
+:where(.live-toast-group) .toast-connection .toast-icon svg {
   animation: spin 1s linear infinite;
 }
 
@@ -817,7 +817,7 @@
   }
 }
 
-.animate-slide-in-right {
+:where(.live-toast-group) .animate-slide-in-right {
   animation: slide-in-right 0.3s ease-out;
 }
 
