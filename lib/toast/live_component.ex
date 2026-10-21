@@ -37,7 +37,8 @@ defmodule Toast.LiveComponent do
      |> assign(:toast_count, 0)
      |> assign(:toasts_by_id, %{})
      |> assign(:max_toasts, nil)
-     |> assign(:flash_messages, %{})}
+     |> assign(:flash_messages, %{})
+     |> assign(:flash_toast_keys, MapSet.new())}
   end
 
   @impl true
@@ -51,7 +52,11 @@ defmodule Toast.LiveComponent do
     # Only update flash messages if flash is explicitly provided in assigns
     socket =
       if Map.has_key?(assigns, :flash) do
-        update_flash_messages(socket, assigns.flash)
+        {toasts, flash} = Enum.split_with(assigns.flash, fn {key, _} -> flash_toast?(key) end)
+
+        socket
+        |> update_flash_messages(Map.new(flash))
+        |> insert_flash_toasts(toasts)
       else
         socket
       end
@@ -171,6 +176,30 @@ defmodule Toast.LiveComponent do
     socket
     |> stream_delete(:toasts, %{id: id})
     |> update(:toasts_by_id, &Map.delete(&1, id))
+  end
+
+  defp flash_toast?(key), do: is_binary(key) and String.starts_with?(key, Toast.flash_prefix())
+
+  # Toasts from put_toast/4 stay in the flash until the LiveView navigates, so
+  # remember which flash keys were shown to avoid inserting them again on
+  # re-render. Keys are unique per put_toast/4 call, so a reused toast id is
+  # still shown again. Only keys still in the flash are kept.
+  defp insert_flash_toasts(socket, toasts) do
+    shown = socket.assigns.flash_toast_keys
+
+    socket =
+      toasts
+      |> Enum.reject(fn {key, _} -> MapSet.member?(shown, key) end)
+      |> Enum.sort_by(fn {key, _} ->
+        key |> String.replace_prefix(Toast.flash_prefix(), "") |> String.to_integer()
+      end)
+      |> Enum.reduce(socket, fn {_key, toast}, socket ->
+        socket
+        |> stream_insert(:toasts, struct(Toast, toast), at: 0)
+        |> update(:toast_count, &(&1 + 1))
+      end)
+
+    assign(socket, :flash_toast_keys, MapSet.new(toasts, fn {key, _} -> key end))
   end
 
   defp update_flash_messages(socket, new_flash) do

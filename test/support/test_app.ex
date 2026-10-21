@@ -29,6 +29,32 @@ defmodule Toast.TestApp do
     end
   end
 
+  defmodule ToastComponent do
+    use Phoenix.LiveComponent
+
+    def render(assigns) do
+      ~H"""
+      <div id={@id}>
+        <button id="component-toast" phx-click="toast" phx-target={@myself}>Toast</button>
+        <button id="component-toast-and-navigate" phx-click="toast_and_navigate" phx-target={@myself}>
+          Toast and navigate
+        </button>
+      </div>
+      """
+    end
+
+    def handle_event("toast", _params, socket) do
+      {:noreply, Toast.put_toast(socket, :info, "From component")}
+    end
+
+    def handle_event("toast_and_navigate", _params, socket) do
+      {:noreply,
+       socket
+       |> Toast.put_toast(:info, "Navigated from component")
+       |> push_navigate(to: "/target")}
+    end
+  end
+
   defmodule SourceLive do
     use Phoenix.LiveView
 
@@ -39,6 +65,7 @@ defmodule Toast.TestApp do
     def render(assigns) do
       ~H"""
       <h1>Source</h1>
+      <.live_component module={Toast.TestApp.ToastComponent} id="toast-component" />
       """
     end
 
@@ -65,6 +92,29 @@ defmodule Toast.TestApp do
        socket
        |> Toast.put_toast(:success, message, duration: 10_000)
        |> push_navigate(to: "/target")}
+    end
+
+    def handle_event("two_toasts_and_navigate", _params, socket) do
+      {:noreply,
+       socket
+       |> Toast.put_toast(:info, "First toast")
+       |> Toast.put_toast(:info, "Second toast")
+       |> push_navigate(to: "/target")}
+    end
+
+    def handle_event("toast_and_redirect", %{"message" => message}, socket) do
+      {:noreply,
+       socket
+       |> Toast.put_toast(:success, message)
+       |> redirect(to: "/target")}
+    end
+
+    def handle_event("toast_with_id", %{"message" => message}, socket) do
+      {:noreply, Toast.put_toast(socket, :info, message, id: "save-toast")}
+    end
+
+    def handle_event("rerender", _params, socket) do
+      {:noreply, assign(socket, :rerendered, true)}
     end
 
     def handle_event("flash_and_navigate", %{"message" => message}, socket) do

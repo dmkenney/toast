@@ -226,10 +226,15 @@ defmodule Toast do
     )
   end
 
-  @doc """
-  Sends a toast notification and returns the socket for piping.
+  # Flash keys starting with this prefix hold toasts added with put_toast/4.
+  @doc false
+  def flash_prefix, do: "__toast__:"
 
-  This is a convenience function for use in pipelines.
+  @doc """
+  Puts a toast in the socket's flash and returns the socket for piping.
+
+  Accepts the same options as `send_toast/3`. Because the toast is stored in the
+  flash, it is still shown after `push_navigate/2` or `redirect/2`, like `put_flash/3`.
 
   ## Examples
 
@@ -239,8 +244,24 @@ defmodule Toast do
       |> push_navigate(to: ~p"/profile")
   """
   def put_toast(socket, type, message, opts \\ []) do
-    send_toast(type, message, opts)
-    socket
+    # Store a plain map so the flash can go through the session cookie on redirect.
+    toast =
+      type
+      |> build_toast(message, opts)
+      |> Map.from_struct()
+      |> Map.reject(fn {_key, value} -> is_nil(value) end)
+
+    # One key per toast, so a navigation only carries the toasts put in that
+    # callback. The counter keeps their order.
+    key = flash_prefix() <> Integer.to_string(System.unique_integer([:positive, :monotonic]))
+
+    # A LiveComponent's flash only reaches the LiveView when it navigates, so
+    # also send the toast to the group right away.
+    if match?(%Phoenix.LiveComponent.CID{}, socket.assigns[:myself]) do
+      send_toast(type, message, opts)
+    end
+
+    Phoenix.LiveView.put_flash(socket, key, toast)
   end
 
   @doc """
