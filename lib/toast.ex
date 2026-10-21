@@ -172,6 +172,22 @@ defmodule Toast do
   * `:rich_colors` - Whether to use rich colors for different toast types (default: false)
   * `:max_toasts` - Maximum number of toasts to display (default: 3)
   * `:animation_duration` - Duration of animations in milliseconds (default: 400)
+  * `:connection_toasts` - Show an error toast while the LiveView is disconnected (default: false).
+    Replaces the `#client-error` and `#server-error` flashes from Phoenix's generated layouts,
+    so remove those when you turn this on.
+  * `:client_error_title` - Title shown when the client loses its connection (default: "We can't find the internet")
+  * `:client_error_message` - Message shown when the client loses its connection (default: "Attempting to reconnect")
+  * `:server_error_title` - Title shown when the server crashes (default: "Something went wrong!")
+  * `:server_error_message` - Message shown when the server crashes (default: "Hang in there while we get back on track")
+
+  To translate the connection toasts, pass gettext strings:
+
+      <Toast.toast_group
+        flash={@flash}
+        connection_toasts={true}
+        client_error_title={gettext("We can't find the internet")}
+        client_error_message={gettext("Attempting to reconnect")}
+      />
   """
   attr(:id, :string, default: "toast-group")
   attr(:flash, :map, required: false)
@@ -180,6 +196,11 @@ defmodule Toast do
   attr(:rich_colors, :boolean, default: false)
   attr(:max_toasts, :integer, default: 3)
   attr(:animation_duration, :integer, default: 400)
+  attr(:connection_toasts, :boolean, default: false)
+  attr(:client_error_title, :string, default: "We can't find the internet")
+  attr(:client_error_message, :string, default: "Attempting to reconnect")
+  attr(:server_error_title, :string, default: "Something went wrong!")
+  attr(:server_error_message, :string, default: "Hang in there while we get back on track")
 
   def toast_group(assigns) do
     ~H"""
@@ -192,6 +213,11 @@ defmodule Toast do
         rich_colors={@rich_colors}
         max_toasts={@max_toasts}
         animation_duration={@animation_duration}
+        connection_toasts={@connection_toasts}
+        client_error_title={@client_error_title}
+        client_error_message={@client_error_message}
+        server_error_title={@server_error_title}
+        server_error_message={@server_error_message}
       />
     """
   end

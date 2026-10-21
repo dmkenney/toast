@@ -46,7 +46,18 @@ defmodule Toast.LiveComponent do
     socket =
       socket
       |> assign(
-        Map.take(assigns, [:position, :theme, :rich_colors, :max_toasts, :animation_duration])
+        Map.take(assigns, [
+          :position,
+          :theme,
+          :rich_colors,
+          :max_toasts,
+          :animation_duration,
+          :connection_toasts,
+          :client_error_title,
+          :client_error_message,
+          :server_error_title,
+          :server_error_message
+        ])
       )
 
     # Only update flash messages if flash is explicitly provided in assigns
@@ -99,6 +110,7 @@ defmodule Toast.LiveComponent do
 
     ~H"""
     <div class={"live-toast-group toast-position-#{@computed_position}"}>
+      <Toast.Components.connection_group :if={@is_top_position && assigns[:connection_toasts]} id={assigns[:id] || "toast-group"} theme={assigns[:theme] || "light"} rich_colors={assigns[:rich_colors] || false} client_error_title={@client_error_title} client_error_message={@client_error_message} server_error_title={@server_error_title} server_error_message={@server_error_message} />
       <Toast.Components.flash_group :if={@is_top_position && map_size(@flash_messages) > 0} flash={@flash_messages} position={@computed_position} theme={assigns[:theme] || "light"} rich_colors={assigns[:rich_colors] || false} />
       <div 
         id={assigns[:id] || "toast-group"}
@@ -115,6 +127,7 @@ defmodule Toast.LiveComponent do
         </div>
       </div>
       <Toast.Components.flash_group :if={!@is_top_position && map_size(@flash_messages) > 0} flash={@flash_messages} position={@computed_position} theme={assigns[:theme] || "light"} rich_colors={assigns[:rich_colors] || false} />
+      <Toast.Components.connection_group :if={!@is_top_position && assigns[:connection_toasts]} id={assigns[:id] || "toast-group"} theme={assigns[:theme] || "light"} rich_colors={assigns[:rich_colors] || false} client_error_title={@client_error_title} client_error_message={@client_error_message} server_error_title={@server_error_title} server_error_message={@server_error_message} />
     </div>
     """
   end

@@ -5,6 +5,8 @@ defmodule Toast.Components do
 
   use Phoenix.Component
 
+  alias Phoenix.LiveView.JS
+
   @doc """
   Renders an individual toast notification.
   """
@@ -268,6 +270,69 @@ defmodule Toast.Components do
     fake_toast = %{type: flash_type_to_toast_type(type)}
     # Fallback to info icon
     render_icon(fake_toast) || render_icon(%{type: :info})
+  end
+
+  @doc """
+  Renders hidden toasts that show while the LiveView is disconnected.
+
+  These replace the `#client-error` and `#server-error` flashes from Phoenix's
+  generated layouts. They use the same `phx-disconnected` and `phx-connected`
+  bindings, so no extra JavaScript is needed. They toggle the `hidden`
+  attribute instead of setting inline styles, which also works with
+  Tailwind's `[hidden] { display: none !important }` reset.
+  """
+  attr(:id, :string, default: "toast-group")
+  attr(:theme, :string, default: "light")
+  attr(:rich_colors, :boolean, default: false)
+  attr(:client_error_title, :string, default: "We can't find the internet")
+  attr(:client_error_message, :string, default: "Attempting to reconnect")
+  attr(:server_error_title, :string, default: "Something went wrong!")
+  attr(:server_error_message, :string, default: "Hang in there while we get back on track")
+
+  def connection_group(assigns) do
+    ~H"""
+    <div class="toast-connection-group" data-theme={@theme} data-rich-colors={to_string(@rich_colors)}>
+      <.connection_toast
+        id={"#{@id}-client-error"}
+        error_class="phx-client-error"
+        title={@client_error_title}
+        message={@client_error_message}
+      />
+      <.connection_toast
+        id={"#{@id}-server-error"}
+        error_class="phx-server-error"
+        title={@server_error_title}
+        message={@server_error_message}
+      />
+    </div>
+    """
+  end
+
+  attr(:id, :string, required: true)
+  attr(:error_class, :string, required: true)
+  attr(:title, :string, required: true)
+  attr(:message, :string, required: true)
+
+  defp connection_toast(assigns) do
+    ~H"""
+    <div
+      id={@id}
+      class="toast toast-flash toast-error toast-connection"
+      data-mounted="true"
+      role="alert"
+      phx-disconnected={JS.remove_attribute("hidden", to: ".#{@error_class} ##{@id}")}
+      phx-connected={JS.set_attribute({"hidden", ""}, to: "##{@id}")}
+      hidden
+    >
+      <div class="toast-icon">
+        <%= render_icon(%{type: :loading}) %>
+      </div>
+      <div class="toast-content">
+        <div class="toast-title"><%= @title %></div>
+        <div class="toast-message"><%= @message %></div>
+      </div>
+    </div>
+    """
   end
 
   @doc """
