@@ -6,6 +6,14 @@ defmodule ToastDemoWeb.GalleryLive do
   def render(assigns) do
     ~H"""
     <style>
+      .toast-gallery {
+        position: static;
+        width: auto;
+        max-width: none;
+        z-index: auto;
+        pointer-events: auto;
+      }
+
       .toast-static .toast {
         position: relative !important;
         transform: none !important;
@@ -30,61 +38,31 @@ defmodule ToastDemoWeb.GalleryLive do
           <%!-- Basic Toast Types - Light Theme --%>
           <section>
             <h2 class="text-3xl font-semibold mb-6">Basic Toast Types - Light Theme</h2>
-            <div class="theme-light flex flex-wrap gap-x-6 gap-y-4 justify-center">
-              <%= for toast <- basic_toasts() do %>
-                <div class="toast-static">
-                  <Toast.Components.toast toast={toast} />
-                </div>
-              <% end %>
-            </div>
+            <.gallery_row toasts={basic_toasts()} />
           </section>
 
           <%!-- Rich Content Toasts --%>
           <section>
             <h2 class="text-3xl font-semibold mb-6">Rich Content Toasts</h2>
-            <div class="theme-light flex flex-wrap gap-x-6 gap-y-4 justify-center">
-              <%= for toast <- rich_toasts() do %>
-                <div class="toast-static">
-                  <Toast.Components.toast toast={toast} />
-                </div>
-              <% end %>
-            </div>
+            <.gallery_row toasts={rich_toasts()} />
           </section>
 
           <%!-- Rich Colors Toasts --%>
           <section>
             <h2 class="text-3xl font-semibold mb-6">Rich Colors</h2>
-            <div class="flex flex-wrap gap-x-6 gap-y-4 justify-center" data-rich-colors="true">
-              <%= for toast <- rich_color_toasts() do %>
-                <div class="toast-static">
-                  <Toast.Components.toast toast={toast} />
-                </div>
-              <% end %>
-            </div>
+            <.gallery_row toasts={rich_color_toasts()} rich_colors />
           </section>
 
           <%!-- Custom Icons --%>
           <section>
             <h2 class="text-3xl font-semibold mb-6">Custom Icons</h2>
-            <div class="theme-light flex flex-wrap gap-x-6 gap-y-4 justify-center">
-              <%= for toast <- custom_icon_toasts() do %>
-                <div class="toast-static">
-                  <Toast.Components.toast toast={toast} />
-                </div>
-              <% end %>
-            </div>
+            <.gallery_row toasts={custom_icon_toasts()} />
           </section>
 
           <%!-- HTML Content Examples --%>
           <section>
             <h2 class="text-3xl font-semibold mb-6">HTML Content</h2>
-            <div class="theme-light flex flex-wrap gap-x-6 gap-y-4 justify-center">
-              <%= for toast <- html_content_toasts() do %>
-                <div class="toast-static">
-                  <Toast.Components.toast toast={toast} />
-                </div>
-              <% end %>
-            </div>
+            <.gallery_row toasts={html_content_toasts()} />
             <p class="text-sm text-gray-500 text-center mt-4">
               ⚠️ HTML content rendered using Phoenix.HTML.raw() - only use with trusted content!
             </p>
@@ -93,16 +71,32 @@ defmodule ToastDemoWeb.GalleryLive do
           <%!-- Dark Theme Toasts --%>
           <section>
             <h2 class="text-3xl font-semibold mb-6">Dark Theme</h2>
-            <div class="bg-gray-900 p-6 rounded-lg dark" data-theme="dark">
-              <div class="flex flex-wrap gap-x-6 gap-y-4 justify-center">
-                <%= for toast <- dark_theme_toasts() do %>
-                  <div class="toast-static">
-                    <Toast.Components.toast toast={toast} />
-                  </div>
-                <% end %>
-              </div>
+            <div class="bg-gray-900 p-6 rounded-lg">
+              <.gallery_row toasts={dark_theme_toasts()} theme="dark" />
             </div>
           </section>
+        </div>
+      </div>
+    </div>
+    """
+  end
+
+  attr :toasts, :list, required: true
+  attr :theme, :string, default: "light"
+  attr :rich_colors, :boolean, default: false
+
+  # Toast styles apply inside a .live-toast-group, and theme colors come from
+  # the data-theme on its direct child, as in Toast.toast_group/1.
+  defp gallery_row(assigns) do
+    ~H"""
+    <div class="live-toast-group toast-gallery">
+      <div
+        data-theme={@theme}
+        data-rich-colors={to_string(@rich_colors)}
+        class="flex flex-wrap gap-x-6 gap-y-4 justify-center"
+      >
+        <div :for={toast <- @toasts} class="toast-static">
+          <Toast.Components.toast toast={toast} />
         </div>
       </div>
     </div>
