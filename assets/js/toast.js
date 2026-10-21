@@ -49,7 +49,7 @@ export default {
         // Only restart timer if it's not already running and duration is valid
         if (!toastInfo.timer && duration > 0 && toastEl.getAttribute('data-removed') !== 'true') {
           toastInfo.timer = setTimeout(() => {
-            this.removeToastFromServer(toastInfo.toastId);
+            this.removeToastFromServer(toastInfo);
           }, duration);
         }
       });
@@ -223,7 +223,7 @@ export default {
       }
       if (toastInfo.duration > 0 && !toastInfo.overLimit) {
         toastInfo.timer = setTimeout(() => {
-          this.removeToastFromServer(toastId);
+          this.removeToastFromServer(toastInfo);
         }, toastInfo.duration);
       }
     });
@@ -270,7 +270,7 @@ export default {
       }
       if (duration > 0) {
         toastInfo.timer = setTimeout(() => {
-          this.removeToastFromServer(toastInfo.toastId);
+          this.removeToastFromServer(toastInfo);
         }, duration);
       }
     }
@@ -357,7 +357,7 @@ export default {
       }
 
       toastInfo.timer = setTimeout(() => {
-        this.removeToastFromServer(toastInfo.toastId);
+        this.removeToastFromServer(toastInfo);
       }, 2000); // Shorter duration after interaction
     });
 
@@ -375,8 +375,7 @@ export default {
           toastInfo.timer = null;
         }
 
-        const toastId = toastEl.dataset.toastId;
-        this.removeToastFromServer(toastId);
+        this.removeToastFromServer(toastInfo);
       });
     }
 
@@ -385,7 +384,7 @@ export default {
     if (actionBtn) {
       actionBtn.addEventListener('click', () => {
         const toastId = toastEl.dataset.toastId;
-        this.pushEventTo(this.el, "action", {
+        this.pushToServer("action", {
           toast_id: toastId,
           action: actionBtn.dataset.toastAction
         });
@@ -429,9 +428,24 @@ export default {
     }, 100);
   },
 
-  // Send event to server to remove toast from stream
-  removeToastFromServer(toastId) {
-    this.pushEventTo(this.el, "clear", { id: toastId });
+  // Ask the server to remove the toast from the stream. Hide it right away, so
+  // closing it still works while disconnected.
+  removeToastFromServer(toastInfo) {
+    if (toastInfo.timer) {
+      clearTimeout(toastInfo.timer);
+      toastInfo.timer = null;
+    }
+    toastInfo.element.setAttribute('data-removed', 'true');
+    toastInfo.element.style.opacity = "0";
+    toastInfo.element.style.pointerEvents = "none";
+    this.pushToServer("clear", { id: toastInfo.toastId });
+  },
+
+  // Push without a promise. Given no reply callback, pushEvent and pushEventTo
+  // return a promise in LiveView 1.0+ that rejects while disconnected, which
+  // shows up as an unhandled rejection. LiveView 0.20 never returns one.
+  pushToServer(event, payload) {
+    this.pushEventTo(this.el, event, payload, () => {});
   },
 
   // Fade out toasts over the limit. The server removes them from the stream
@@ -478,10 +492,10 @@ export default {
           setTimeout(() => {
             flashToast.remove();
             // Send event to server to clear flash from state
-            this.pushEventTo(this.el, "clear-flash", { key: flashKey, type: flashType });
+            this.pushToServer("clear-flash", { key: flashKey, type: flashType });
 
             // Also send event to parent LiveView to clear from Phoenix flash
-            this.pushEvent("lv:clear-flash", { key: flashKey });
+            this.pushEvent("lv:clear-flash", { key: flashKey }, () => {});
           }, this.animationDuration);
         }
       }
