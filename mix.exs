@@ -32,7 +32,9 @@ defmodule Toast.MixProject do
       {:phoenix_live_view, "~> 0.20 or ~> 1.0"},
       {:jason, "~> 1.4"},
       {:ex_doc, "~> 0.31", only: :dev, runtime: false},
-      {:floki, "~> 0.36", only: :test}
+      {:floki, "~> 0.36", only: :test},
+      # LiveViewTest uses lazy_html from LiveView 1.1 on
+      {:lazy_html, ">= 0.1.0", only: :test}
     ]
   end
 

@@ -9,7 +9,7 @@ defmodule Toast.TestApp do
       ~H"""
       <!DOCTYPE html>
       <html>
-        <body>{@inner_content}</body>
+        <body><%= @inner_content %></body>
       </html>
       """
     end
@@ -17,21 +17,21 @@ defmodule Toast.TestApp do
     def app(assigns) do
       ~H"""
       <Toast.toast_group flash={@flash} />
-      {@inner_content}
+      <%= @inner_content %>
       """
     end
 
     def custom_id(assigns) do
       ~H"""
       <Toast.toast_group id="notifications" flash={@flash} connection_toasts={true} />
-      {@inner_content}
+      <%= @inner_content %>
       """
     end
 
     def system_theme(assigns) do
       ~H"""
       <Toast.toast_group flash={@flash} theme="system" rich_colors={true} />
-      {@inner_content}
+      <%= @inner_content %>
       """
     end
   end
@@ -72,7 +72,7 @@ defmodule Toast.TestApp do
     def render(assigns) do
       ~H"""
       <h1>Source</h1>
-      <p :if={assigns[:last_action]} id="last-action">{inspect(@last_action)}</p>
+      <p :if={assigns[:last_action]} id="last-action"><%= inspect(@last_action) %></p>
       <.live_component module={Toast.TestApp.ToastComponent} id="toast-component" />
       """
     end
