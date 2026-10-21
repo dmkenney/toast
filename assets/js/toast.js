@@ -350,7 +350,7 @@ export default {
     if (actionBtn) {
       actionBtn.addEventListener('click', () => {
         const toastId = toastEl.dataset.toastId;
-        this.pushToServer("action", {
+        this.pushFrom(actionBtn, "action", {
           toast_id: toastId,
           action: actionBtn.dataset.toastAction
         });
@@ -405,7 +405,18 @@ export default {
     toastInfo.element.setAttribute('data-removed', 'true');
     toastInfo.element.style.opacity = "0";
     toastInfo.element.style.pointerEvents = "none";
-    this.pushToServer("clear", { id: toastInfo.toastId });
+    this.pushFrom(toastInfo.element, "clear", { id: toastInfo.toastId });
+  },
+
+  // Push a toast's event with a JS command, which locks only el until the
+  // reply. A hook push locks the hook element, the stream container, and
+  // LiveView applies patches for a locked element to a copy that replaces it
+  // on the reply. With several pushes in flight, such as timers that run out
+  // together, an older copy put removed toasts back. A JS push is also
+  // skipped while disconnected, without an error.
+  pushFrom(el, event, value) {
+    const target = `#${CSS.escape(this.el.id)}`;
+    this.liveSocket.execJS(el, JSON.stringify([["push", { event, value, target }]]), "click");
   },
 
   // Push without a promise. Given no reply callback, pushEvent and pushEventTo
