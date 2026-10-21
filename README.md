@@ -155,6 +155,7 @@ Configure the toast container with these attributes:
   rich_colors={false}
   max_toasts={3}
   animation_duration={400}
+  expanded={false}
 />
 ```
 
@@ -170,6 +171,7 @@ Configure the toast container with these attributes:
 | `client_error_message` | string | `"Attempting to reconnect"` | Message when the client loses its connection |
 | `server_error_title` | string | `"Something went wrong!"` | Title when the server crashes |
 | `server_error_message` | string | `"Hang in there while we get back on track"` | Message when the server crashes |
+| `expanded` | boolean | `false` | Always show toasts expanded instead of stacked |
 
 ### Connection Toasts
 
@@ -308,6 +310,7 @@ When multiple toasts are displayed:
 
 - Toasts stack with the newest on top
 - Hovering expands the stack to show all toasts
+- Set `expanded={true}` to turn off stacking and always show toasts expanded
 - Only `max_toasts` are visible (extras are queued)
 - Toasts animate smoothly when added/removed
 

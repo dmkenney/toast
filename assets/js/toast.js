@@ -8,7 +8,9 @@ export default {
     this.gap = 15;
     this.maxToasts = parseInt(this.el.dataset.maxToasts) || null;
     this.animationDuration = parseInt(this.el.dataset.animationDuration) || 400;
-    this.expanded = false;
+    this.alwaysExpanded = this.el.dataset.expanded === "true";
+    this.hovered = false;
+    this.expanded = this.alwaysExpanded;
 
     // Set CSS variable for animation duration
     this.el.parentElement.style.setProperty('--toast-animation-duration', `${this.animationDuration}ms`);
@@ -25,12 +27,14 @@ export default {
     this.setupFlashMessageHandlers();
 
     this.el.addEventListener("mouseenter", () => {
+      this.hovered = true;
       this.expanded = true;
       this.updateToasts();
     });
 
     this.el.addEventListener("mouseleave", () => {
-      this.expanded = false;
+      this.hovered = false;
+      this.expanded = this.alwaysExpanded;
       this.updateToasts();
 
       // Ensure all toasts restart their timers when container is left
@@ -54,6 +58,11 @@ export default {
   updated() {
     // Update maxToasts in case it changed
     this.maxToasts = parseInt(this.el.dataset.maxToasts) || null;
+    const alwaysExpanded = this.el.dataset.expanded === "true";
+    if (alwaysExpanded !== this.alwaysExpanded) {
+      this.alwaysExpanded = alwaysExpanded;
+      this.expanded = alwaysExpanded || this.hovered;
+    }
     const newAnimationDuration = parseInt(this.el.dataset.animationDuration) || 400;
     
     // Check if animation duration changed

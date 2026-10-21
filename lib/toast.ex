@@ -163,6 +163,8 @@ defmodule Toast do
         animation_duration={600}
       />
 
+      <Toast.toast_group flash={@flash} expanded={true} />
+
   ## Attributes
 
   * `:id` - The ID of the toast group container (default: "toast-group")
@@ -179,6 +181,8 @@ defmodule Toast do
   * `:client_error_message` - Message shown when the client loses its connection (default: "Attempting to reconnect")
   * `:server_error_title` - Title shown when the server crashes (default: "Something went wrong!")
   * `:server_error_message` - Message shown when the server crashes (default: "Hang in there while we get back on track")
+  * `:expanded` - Always show toasts expanded instead of stacked. When `false`, toasts
+    stack and expand on hover (default: false)
 
   To translate the connection toasts, pass gettext strings:
 
@@ -201,6 +205,7 @@ defmodule Toast do
   attr(:client_error_message, :string, default: "Attempting to reconnect")
   attr(:server_error_title, :string, default: "Something went wrong!")
   attr(:server_error_message, :string, default: "Hang in there while we get back on track")
+  attr(:expanded, :boolean, default: false)
 
   def toast_group(assigns) do
     ~H"""
@@ -218,6 +223,7 @@ defmodule Toast do
         client_error_message={@client_error_message}
         server_error_title={@server_error_title}
         server_error_message={@server_error_message}
+        expanded={@expanded}
       />
     """
   end
