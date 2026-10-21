@@ -6,11 +6,12 @@ defmodule ToastDemoWeb.GalleryLive do
   def render(assigns) do
     ~H"""
     <style>
+      /* Keep the sample toasts in their own layer, under the real toasts */
       .toast-gallery {
-        position: static;
+        position: relative;
         width: auto;
         max-width: none;
-        z-index: auto;
+        z-index: 0;
         pointer-events: auto;
       }
 
