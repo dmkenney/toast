@@ -147,6 +147,7 @@ Configure the toast container with these attributes:
   rich_colors={false}
   max_toasts={3}
   animation_duration={400}
+  expanded={false}
 />
 ```
 
@@ -157,6 +158,7 @@ Configure the toast container with these attributes:
 | `rich_colors` | boolean | `false` | Use more vibrant colors for toast types |
 | `max_toasts` | integer | `3` | Maximum number of visible toasts |
 | `animation_duration` | integer | `400` | Duration of animations in milliseconds |
+| `expanded` | boolean | `false` | Always show toasts expanded instead of stacked |
 
 ### Individual Toast Options
 
@@ -269,6 +271,7 @@ When multiple toasts are displayed:
 
 - Toasts stack with the newest on top
 - Hovering expands the stack to show all toasts
+- Set `expanded={true}` to turn off stacking and always show toasts expanded
 - Only `max_toasts` are visible (extras are queued)
 - Toasts animate smoothly when added/removed
 

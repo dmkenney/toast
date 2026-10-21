@@ -218,6 +218,11 @@
   top: 100%;
 }
 
+/* Always expanded: no hover to keep, so don't block clicks around toasts */
+.live-toast-group [data-expanded="true"] .toast::after {
+  content: none;
+}
+
 /* Also add hover area for front toast when collapsed - only extend upward for bottom positions */
 .toast-position-bottom-left .toast[data-mounted="true"][data-expanded="false"][data-front="true"]::after,
 .toast-position-bottom-center .toast[data-mounted="true"][data-expanded="false"][data-front="true"]::after,
