@@ -86,6 +86,9 @@ defmodule Toast.LiveComponent do
         id = assigns[:clear] ->
           delete_toast(socket, id)
 
+        id = assigns[:remove_faded] ->
+          remove_faded(socket, id)
+
         assigns[:clear_all] ->
           clear_all(socket)
 
@@ -130,7 +133,7 @@ defmodule Toast.LiveComponent do
 
   @impl true
   def handle_event("clear", %{"id" => id}, socket) do
-    {:noreply, delete_toast(socket, id)}
+    {:noreply, fade_out(socket, id)}
   end
 
   def handle_event("clear-flash", %{"key" => key}, socket) do
@@ -161,7 +164,7 @@ defmodule Toast.LiveComponent do
     end
 
     # Remove the toast after action
-    {:noreply, delete_toast(socket, toast_id)}
+    {:noreply, fade_out(socket, toast_id)}
   end
 
   defp to_event(event) when is_atom(event), do: event
@@ -200,7 +203,7 @@ defmodule Toast.LiveComponent do
       delay = socket.assigns[:animation_duration] || 400
 
       for id <- removed do
-        send_update_after(socket.assigns.myself, %{clear: id}, delay)
+        send_update_after(socket.assigns.myself, %{remove_faded: id}, delay)
       end
 
       socket
@@ -209,6 +212,22 @@ defmodule Toast.LiveComponent do
     else
       socket
     end
+  end
+
+  # The client starts fading a toast out when it is closed or its timer runs
+  # out. Forget it now, but keep it in the stream until the fade has run.
+  defp fade_out(socket, id) do
+    delay = socket.assigns[:animation_duration] || 400
+    send_update_after(socket.assigns.myself, %{remove_faded: id}, delay)
+
+    socket
+    |> update(:toasts_by_id, &Map.delete(&1, id))
+    |> update(:toast_ids, &List.delete(&1, id))
+  end
+
+  # Skip the removal if a toast with the same id was added again meanwhile.
+  defp remove_faded(socket, id) do
+    if id in socket.assigns.toast_ids, do: socket, else: stream_delete(socket, :toasts, %{id: id})
   end
 
   defp delete_toast(socket, id) do

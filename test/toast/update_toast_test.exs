@@ -41,6 +41,8 @@ defmodule Toast.UpdateToastTest do
     render_hook(view, "toast_with_id", %{"id" => "job", "message" => "Working"})
 
     view |> with_target(".live-toast-group") |> render_hook("clear", %{"id" => "job"})
+
+    wait_for_fade()
     refute has_element?(view, "#toasts-job")
 
     render_hook(view, "update_toast", %{"id" => "job", "message" => "Done"})

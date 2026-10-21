@@ -91,6 +91,8 @@ defmodule Toast.NavigationTest do
       view |> render() |> Floki.parse_fragment!() |> Floki.attribute(".toast", "data-toast-id")
 
     view |> with_target(".live-toast-group") |> render_hook("clear", %{"id" => id})
+
+    wait_for_fade()
     refute render(view) =~ "Dismiss me"
 
     render_hook(view, "rerender", %{})
@@ -149,6 +151,8 @@ defmodule Toast.NavigationTest do
     assert render(view) =~ "First save"
 
     view |> with_target(".live-toast-group") |> render_hook("clear", %{"id" => "save-toast"})
+
+    wait_for_fade()
     refute render(view) =~ "First save"
 
     render_hook(view, "toast_with_id", %{"message" => "Second save"})

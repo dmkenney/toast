@@ -13,6 +13,7 @@ defmodule Toast.ActionTest do
     |> render_hook("action", %{"toast_id" => "act", "action" => ~s({"event":"undo"})})
 
     assert view |> element("#last-action") |> render() =~ ~s({:undo, %{&quot;id&quot; =&gt; 1}})
+    wait_for_fade()
     refute has_element?(view, "#toasts-act")
   end
 

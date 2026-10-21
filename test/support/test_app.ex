@@ -16,7 +16,7 @@ defmodule Toast.TestApp do
 
     def app(assigns) do
       ~H"""
-      <Toast.toast_group flash={@flash} />
+      <Toast.toast_group flash={@flash} animation_duration={1} />
       <%= @inner_content %>
       """
     end

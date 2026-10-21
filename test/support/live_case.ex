@@ -10,6 +10,10 @@ defmodule Toast.LiveCase do
       import Phoenix.LiveViewTest
 
       @endpoint Toast.TestApp.Endpoint
+
+      # Closed toasts stay in the stream until their fade has run, which the
+      # test layout shortens to 1ms.
+      defp wait_for_fade, do: Process.sleep(20)
     end
   end
 
