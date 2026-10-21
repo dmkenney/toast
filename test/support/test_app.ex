@@ -46,6 +46,25 @@ defmodule Toast.TestApp do
        |> push_navigate(to: "/target")}
     end
 
+    def handle_event("two_toasts_and_navigate", _params, socket) do
+      {:noreply,
+       socket
+       |> Toast.put_toast(:info, "First toast")
+       |> Toast.put_toast(:info, "Second toast")
+       |> push_navigate(to: "/target")}
+    end
+
+    def handle_event("toast_and_redirect", %{"message" => message}, socket) do
+      {:noreply,
+       socket
+       |> Toast.put_toast(:success, message)
+       |> redirect(to: "/target")}
+    end
+
+    def handle_event("rerender", _params, socket) do
+      {:noreply, assign(socket, :rerendered, true)}
+    end
+
     def handle_event("flash_and_navigate", %{"message" => message}, socket) do
       {:noreply,
        socket

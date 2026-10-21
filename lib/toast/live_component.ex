@@ -32,7 +32,8 @@ defmodule Toast.LiveComponent do
      |> stream(:toasts, [])
      |> assign(:toast_count, 0)
      |> assign(:max_toasts, nil)
-     |> assign(:flash_messages, %{})}
+     |> assign(:flash_messages, %{})
+     |> assign(:flash_toast_ids, MapSet.new())}
   end
 
   @impl true
@@ -46,7 +47,11 @@ defmodule Toast.LiveComponent do
     # Only update flash messages if flash is explicitly provided in assigns
     socket =
       if Map.has_key?(assigns, :flash) do
-        update_flash_messages(socket, assigns.flash)
+        {toasts, flash} = Enum.split_with(assigns.flash, fn {key, _} -> flash_toast?(key) end)
+
+        socket
+        |> update_flash_messages(Map.new(flash))
+        |> insert_flash_toasts(toasts)
       else
         socket
       end
@@ -140,6 +145,25 @@ defmodule Toast.LiveComponent do
 
     # Remove the toast after action
     {:noreply, stream_delete(socket, :toasts, %{id: toast_id})}
+  end
+
+  defp flash_toast?(key), do: is_binary(key) and String.starts_with?(key, Toast.flash_prefix())
+
+  # Toasts from put_toast/4 stay in the flash until the LiveView navigates, so
+  # remember which ones were shown to avoid inserting them again on re-render.
+  defp insert_flash_toasts(socket, toasts) do
+    toasts
+    |> Enum.sort_by(fn {key, _} ->
+      key |> String.replace_prefix(Toast.flash_prefix(), "") |> String.to_integer()
+    end)
+    |> Enum.map(fn {_key, toast} -> struct(Toast, toast) end)
+    |> Enum.reject(&MapSet.member?(socket.assigns.flash_toast_ids, &1.id))
+    |> Enum.reduce(socket, fn toast, socket ->
+      socket
+      |> stream_insert(:toasts, toast, at: 0)
+      |> update(:toast_count, &(&1 + 1))
+      |> update(:flash_toast_ids, &MapSet.put(&1, toast.id))
+    end)
   end
 
   defp update_flash_messages(socket, new_flash) do

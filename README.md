@@ -97,7 +97,15 @@ def handle_event("delete", _params, socket) do
    |> Toast.put_toast(:error, "Failed to delete", duration: 5000)}
 end
 
-# Or without piping
+# put_toast is stored in the flash, so it is still shown after navigating
+def handle_event("create", _params, socket) do
+  {:noreply,
+   socket
+   |> Toast.put_toast(:success, "Item created!")
+   |> push_navigate(to: ~p"/items")}
+end
+
+# Or without piping (shown on the current LiveView only)
 def handle_event("notify", _params, socket) do
   Toast.send_toast(:info, "Notification sent!")
   {:noreply, socket}
