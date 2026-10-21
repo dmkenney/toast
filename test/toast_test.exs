@@ -245,13 +245,16 @@ defmodule ToastTest do
   end
 
   describe "put_toast/4" do
-    test "returns the socket unchanged" do
-      # Mock socket
-      socket = %{assigns: %{user: "test"}}
+    test "puts the toast in the flash as a plain map" do
+      socket = %Phoenix.LiveView.Socket{assigns: %{__changed__: %{}, flash: %{}, user: "test"}}
 
-      # put_toast should return the same socket
-      result = Toast.put_toast(socket, :info, "Test message", [])
-      assert result == socket
+      result = Toast.put_toast(socket, :info, "Test message", duration: 10_000)
+
+      assert result.assigns.user == "test"
+      assert [{"__toast__:" <> _, toast}] = Map.to_list(result.assigns.flash)
+      refute is_struct(toast)
+      assert %{type: :info, message: "Test message", duration: 10_000} = toast
+      refute Map.has_key?(toast, :title)
     end
   end
 

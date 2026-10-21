@@ -5,6 +5,8 @@ defmodule Toast.Components do
 
   use Phoenix.Component
 
+  alias Phoenix.LiveView.JS
+
   @doc """
   Renders an individual toast notification.
   """
@@ -214,25 +216,33 @@ defmodule Toast.Components do
   attr(:rich_colors, :boolean, default: false)
 
   def flash_group(assigns) do
+    assigns = assign(assigns, :messages, Enum.map(assigns.flash, &flash_message/1))
+
     ~H"""
     <div class={["flash-messages", "flash-position-#{@position}"]} data-theme={@theme} data-rich-colors={to_string(@rich_colors)}>
-      <%= for {type, message} <- @flash do %>
-        <div class={["toast", "toast-flash", "toast-#{flash_type_to_toast_type(type)}"]} 
-             id={"flash-#{type}-#{System.unique_integer([:positive])}"}
-             data-flash-key={type}
-             data-flash-type={type}
+      <%= for message <- @messages do %>
+        <div class={["toast", "toast-flash", "toast-#{flash_type_to_toast_type(message.type)}"]} 
+             id={"flash-#{message.key}"}
+             data-flash-key={message.key}
+             data-flash-type={message.type}
              data-mounted="true"
              role="status"
              aria-live="polite">
-          <%= if icon = render_flash_icon(type) do %>
+          <%= if icon = render_flash_icon(message.type) do %>
             <div class="toast-icon">
               <%= icon %>
             </div>
           <% end %>
 
           <div class="toast-content">
+            <div :if={message.title} class="toast-title">
+              <%= render_content(message.title) %>
+            </div>
             <div class="toast-message">
-              <%= render_content(message) %>
+              <%= render_content(message.message) %>
+            </div>
+            <div :if={message.description} class="toast-description">
+              <%= render_content(message.description) %>
             </div>
           </div>
 
@@ -240,8 +250,8 @@ defmodule Toast.Components do
             type="button"
             class="toast-close"
             data-close-flash
-            data-flash-key={type}
-            data-flash-type={type}
+            data-flash-key={message.key}
+            data-flash-type={message.type}
             aria-label="Close"
           >
             ×
@@ -250,6 +260,21 @@ defmodule Toast.Components do
       <% end %>
     </div>
     """
+  end
+
+  # Toasts from Toast.put_toast/4 are stored in the flash as maps.
+  defp flash_message({key, %{type: _, message: _} = toast}) do
+    %{
+      key: key,
+      type: toast.type,
+      title: toast[:title],
+      message: toast.message,
+      description: toast[:description]
+    }
+  end
+
+  defp flash_message({key, message}) do
+    %{key: key, type: key, title: nil, message: message, description: nil}
   end
 
   defp flash_type_to_toast_type(:error), do: :error
@@ -268,6 +293,69 @@ defmodule Toast.Components do
     fake_toast = %{type: flash_type_to_toast_type(type)}
     # Fallback to info icon
     render_icon(fake_toast) || render_icon(%{type: :info})
+  end
+
+  @doc """
+  Renders hidden toasts that show while the LiveView is disconnected.
+
+  These replace the `#client-error` and `#server-error` flashes from Phoenix's
+  generated layouts. They use the same `phx-disconnected` and `phx-connected`
+  bindings, so no extra JavaScript is needed. They toggle the `hidden`
+  attribute instead of setting inline styles, which also works with
+  Tailwind's `[hidden] { display: none !important }` reset.
+  """
+  attr(:id, :string, default: "toast-group")
+  attr(:theme, :string, default: "light")
+  attr(:rich_colors, :boolean, default: false)
+  attr(:client_error_title, :string, default: "We can't find the internet")
+  attr(:client_error_message, :string, default: "Attempting to reconnect")
+  attr(:server_error_title, :string, default: "Something went wrong!")
+  attr(:server_error_message, :string, default: "Hang in there while we get back on track")
+
+  def connection_group(assigns) do
+    ~H"""
+    <div class="toast-connection-group" data-theme={@theme} data-rich-colors={to_string(@rich_colors)}>
+      <.connection_toast
+        id={"#{@id}-client-error"}
+        error_class="phx-client-error"
+        title={@client_error_title}
+        message={@client_error_message}
+      />
+      <.connection_toast
+        id={"#{@id}-server-error"}
+        error_class="phx-server-error"
+        title={@server_error_title}
+        message={@server_error_message}
+      />
+    </div>
+    """
+  end
+
+  attr(:id, :string, required: true)
+  attr(:error_class, :string, required: true)
+  attr(:title, :string, required: true)
+  attr(:message, :string, required: true)
+
+  defp connection_toast(assigns) do
+    ~H"""
+    <div
+      id={@id}
+      class="toast toast-flash toast-error toast-connection"
+      data-mounted="true"
+      role="alert"
+      phx-disconnected={JS.remove_attribute("hidden", to: ".#{@error_class} ##{@id}")}
+      phx-connected={JS.set_attribute({"hidden", ""}, to: "##{@id}")}
+      hidden
+    >
+      <div class="toast-icon">
+        <%= render_icon(%{type: :loading}) %>
+      </div>
+      <div class="toast-content">
+        <div class="toast-title"><%= @title %></div>
+        <div class="toast-message"><%= @message %></div>
+      </div>
+    </div>
+    """
   end
 
   @doc """
