@@ -286,18 +286,19 @@ defmodule ToastDemoWeb.HomeLive do
 
           <%!-- Navigation --%>
           <section>
-            <h2 class="text-2xl font-semibold mb-4">Navigation</h2>
+            <h2 class="text-2xl font-semibold mb-4">Toast After Navigation</h2>
             <div class="flex gap-4">
               <button
                 phx-click="toast_and_navigate"
                 class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
               >
-                Navigate with a Toast
+                Go to Gallery with a Toast
               </button>
             </div>
             <p class="text-sm text-gray-500 mt-2">
-              Like saving a form and redirecting: put_toast then push_navigate to the
-              gallery. The toast shows on the gallery page, bottom right.
+              The toast is created on this page, then you're taken to the gallery. It
+              survives the page change and shows there, like a "Saved" message after
+              a form redirects.
             </p>
           </section>
 
