@@ -46,6 +46,20 @@ defmodule Toast.TestApp do
       {:noreply, Toast.put_toast(socket, :success, message)}
     end
 
+    def handle_event("toast_with_id", %{"id" => id, "message" => message}, socket) do
+      {:noreply, Toast.put_toast(socket, :loading, message, id: id)}
+    end
+
+    def handle_event("update_toast", %{"id" => id, "message" => message}, socket) do
+      Toast.update_toast(id, type: :success, message: message, bogus: true)
+      {:noreply, socket}
+    end
+
+    def handle_event("clear_toast", %{"id" => id}, socket) do
+      Toast.clear_toast(id)
+      {:noreply, socket}
+    end
+
     def handle_event("toast_and_navigate", %{"message" => message}, socket) do
       {:noreply,
        socket

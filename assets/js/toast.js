@@ -114,7 +114,11 @@ export default {
       } else {
         // Ensure existing toasts maintain their mounted state
         const toastEl = el.querySelector('.toast:not(.toast-flash)');
-        if (toastEl && toastEl.getAttribute('data-mounted') !== 'true') {
+        const toastInfo = this.toasts.get(el.id);
+        if (toastEl && toastEl !== toastInfo.element) {
+          // The toast was re-rendered by update_toast
+          this.refreshToast(el.id, toastEl, toastInfo, index);
+        } else if (toastEl && toastEl.getAttribute('data-mounted') !== 'true') {
           toastEl.setAttribute('data-mounted', 'true');
         }
       }
@@ -142,6 +146,7 @@ export default {
       element: toastEl,
       height: 80, // Default estimated height
       timer: null,
+      duration: duration,
       domId: el.id,
       toastId: toastId
     };
@@ -168,6 +173,9 @@ export default {
 
     // Get actual height first, then update positions
     requestAnimationFrame(() => {
+      // update_toast may have replaced the element before this frame ran
+      const toastEl = toastInfo.element;
+
       // Measure actual height before any transforms/scaling are applied
       // We need to temporarily reset transforms to get the natural height
       const originalTransform = toastEl.style.transform;
@@ -190,15 +198,56 @@ export default {
       }, 10);
 
       // Set up auto-removal timer
-      if (duration > 0 && (this.maxToasts === null || index < this.maxToasts)) {
+      if (toastInfo.timer) {
+        clearTimeout(toastInfo.timer);
+        toastInfo.timer = null;
+      }
+      if (toastInfo.duration > 0 && (this.maxToasts === null || index < this.maxToasts)) {
         toastInfo.timer = setTimeout(() => {
           this.removeToastFromServer(toastId);
-        }, duration);
+        }, toastInfo.duration);
       }
     });
 
     // Handle interactions
     this.setupToastInteractions(el.id, toastEl, toastInfo);
+  },
+
+  // Re-attach to a toast element that the server replaced in place
+  refreshToast(domId, toastEl, toastInfo, index) {
+    toastInfo.element = toastEl;
+    toastEl.style.pointerEvents = "auto";
+    toastEl.style.setProperty('--index', index);
+    toastEl.style.setProperty('--toasts-before', index);
+    toastEl.setAttribute('data-front', index === 0 ? 'true' : 'false');
+    toastEl.setAttribute('data-expanded', this.expanded ? 'true' : 'false');
+
+    // Measure the new height while unmounted, so stacking styles don't clamp it
+    toastEl.style.transition = "none";
+    toastInfo.height = toastEl.getBoundingClientRect().height;
+    toastEl.style.height = toastInfo.height + 'px';
+    toastEl.setAttribute('data-mounted', 'true');
+    setTimeout(() => {
+      toastEl.style.transition = `all ${this.animationDuration}ms cubic-bezier(0.21, 1.02, 0.73, 1)`;
+    }, 10);
+
+    // Restart the timer if the duration changed
+    const duration = parseInt(toastEl.dataset.duration || "6000");
+    if (duration !== toastInfo.duration) {
+      toastInfo.duration = duration;
+      if (toastInfo.timer) {
+        clearTimeout(toastInfo.timer);
+        toastInfo.timer = null;
+      }
+      if (duration > 0) {
+        toastInfo.timer = setTimeout(() => {
+          this.removeToastFromServer(toastInfo.toastId);
+        }, duration);
+      }
+    }
+
+    this.setupToastInteractions(domId, toastEl, toastInfo);
+    this.updateToasts();
   },
 
   updateToasts() {

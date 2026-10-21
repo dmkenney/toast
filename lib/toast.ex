@@ -246,6 +246,11 @@ defmodule Toast do
   @doc """
   Updates an existing toast by ID.
 
+  `updates` is a keyword list of toast fields (`:type`, `:message`, `:title`,
+  `:description`, `:duration`, `:action`, `:icon`, `:close_button`, `:important`).
+  The toast is re-rendered in place. A new `:duration` restarts its timer.
+  Unknown fields are ignored, and an ID that isn't showing is a no-op.
+
   ## Examples
 
       Toast.update_toast("toast-123", message: "Updated message", type: :success)
