@@ -30,29 +30,19 @@ export default {
     // Set up flash message close buttons
     this.setupFlashMessageHandlers();
 
+    // While the pointer is over the group, every toast's timer is paused
     this.el.addEventListener("mouseenter", () => {
       this.hovered = true;
       this.expanded = true;
       this.updateToasts();
+      this.toasts.forEach(toastInfo => this.pauseTimer(toastInfo));
     });
 
     this.el.addEventListener("mouseleave", () => {
       this.hovered = false;
       this.expanded = this.alwaysExpanded;
       this.updateToasts();
-
-      // Ensure all toasts restart their timers when container is left
-      this.toasts.forEach((toastInfo, domId) => {
-        const toastEl = toastInfo.element;
-        const duration = parseInt(toastEl.dataset.duration || "6000");
-
-        // Only restart timer if it's not already running and duration is valid
-        if (!toastInfo.timer && duration > 0 && toastEl.getAttribute('data-removed') !== 'true') {
-          toastInfo.timer = setTimeout(() => {
-            this.removeToastFromServer(toastInfo);
-          }, duration);
-        }
-      });
+      this.toasts.forEach(toastInfo => this.startTimer(toastInfo));
     });
 
     // Process initial toasts
@@ -163,6 +153,7 @@ export default {
       height: 80, // Default estimated height
       timer: null,
       duration: duration,
+      remaining: duration,
       domId: el.id,
       toastId: toastId
     };
@@ -214,15 +205,7 @@ export default {
       }, 10);
 
       // Set up auto-removal timer
-      if (toastInfo.timer) {
-        clearTimeout(toastInfo.timer);
-        toastInfo.timer = null;
-      }
-      if (toastInfo.duration > 0 && !toastInfo.overLimit) {
-        toastInfo.timer = setTimeout(() => {
-          this.removeToastFromServer(toastInfo);
-        }, toastInfo.duration);
-      }
+      this.startTimer(toastInfo);
     });
 
     // Handle interactions
@@ -261,15 +244,12 @@ export default {
     const duration = parseInt(toastEl.dataset.duration || "6000");
     if (duration !== toastInfo.duration) {
       toastInfo.duration = duration;
+      toastInfo.remaining = duration;
       if (toastInfo.timer) {
         clearTimeout(toastInfo.timer);
         toastInfo.timer = null;
       }
-      if (duration > 0) {
-        toastInfo.timer = setTimeout(() => {
-          this.removeToastFromServer(toastInfo);
-        }, duration);
-      }
+      this.startTimer(toastInfo);
     }
 
     this.setupToastInteractions(domId, toastEl, toastInfo);
@@ -329,36 +309,25 @@ export default {
     return offset;
   },
 
+  // Start or resume the toast's timer with the time it has left
+  startTimer(toastInfo) {
+    if (toastInfo.timer || this.hovered || toastInfo.duration <= 0 || toastInfo.overLimit || toastInfo.removed) {
+      return;
+    }
+    toastInfo.startedAt = Date.now();
+    toastInfo.timer = setTimeout(() => {
+      this.removeToastFromServer(toastInfo);
+    }, toastInfo.remaining);
+  },
+
+  pauseTimer(toastInfo) {
+    if (!toastInfo.timer) return;
+    clearTimeout(toastInfo.timer);
+    toastInfo.timer = null;
+    toastInfo.remaining -= Date.now() - toastInfo.startedAt;
+  },
+
   setupToastInteractions(domId, toastEl, toastInfo) {
-    // Store original duration
-    const originalDuration = parseInt(toastEl.dataset.duration || "6000");
-
-    // Pause timer on hover
-    toastEl.addEventListener("mouseenter", () => {
-      if (toastInfo.timer) {
-        clearTimeout(toastInfo.timer);
-        toastInfo.timer = null;
-      }
-    });
-
-    // Resume timer on mouse leave
-    toastEl.addEventListener("mouseleave", () => {
-      // Don't restart timer if toast is being removed or duration is infinite
-      if (toastEl.getAttribute('data-removed') === 'true' || originalDuration <= 0) {
-        return;
-      }
-
-      // Always restart timer when mouse leaves
-      if (toastInfo.timer) {
-        clearTimeout(toastInfo.timer);
-      }
-
-      toastInfo.timer = setTimeout(() => {
-        this.removeToastFromServer(toastInfo);
-      }, 2000); // Shorter duration after interaction
-    });
-
-
     // Handle close button
     const closeBtn = toastEl.querySelector('[data-close-toast]');
     if (closeBtn) {
@@ -432,6 +401,7 @@ export default {
       clearTimeout(toastInfo.timer);
       toastInfo.timer = null;
     }
+    toastInfo.removed = true;
     toastInfo.element.setAttribute('data-removed', 'true');
     toastInfo.element.style.opacity = "0";
     toastInfo.element.style.pointerEvents = "none";
