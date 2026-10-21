@@ -97,9 +97,6 @@ export default {
 
     // When stream updates, reprocess toasts
     this.processToasts();
-
-    // Re-setup flash message handlers in case new ones were added
-    this.setupFlashMessageHandlers();
   },
 
   destroyed() {
