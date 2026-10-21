@@ -71,9 +71,7 @@ defmodule Toast do
 
   ```heex
   <Toast.toast_group :if={@live} flash={@flash} connection_toasts={true} />
-  <div :if={!@live} class="live-toast-group toast-position-bottom-right">
-    <Toast.Components.flash_group flash={@flash} />
-  </div>
+  <Toast.flash_group :if={!@live} flash={@flash} />
   ```
 
   Controller templates then use `<Layouts.app flash={@flash} live={false}>`.
@@ -279,6 +277,36 @@ defmodule Toast do
         server_error_message={@server_error_message}
         expanded={@expanded}
       />
+    """
+  end
+
+  @doc """
+  Renders flash messages in Toast's style on pages that are not LiveViews.
+
+  `toast_group/1` needs a LiveView, so controller templates use this instead.
+  Pass the same `position`, `theme` and `rich_colors` as your `toast_group/1`
+  so both look the same. Flash messages here don't auto-dismiss and the close
+  button does nothing, since the JavaScript hook only runs in a LiveView.
+
+  ## Examples
+
+      <Toast.flash_group flash={@flash} />
+  """
+  attr(:flash, :map, required: true)
+  attr(:position, :string, default: "bottom-right")
+  attr(:theme, :string, default: "light")
+  attr(:rich_colors, :boolean, default: false)
+
+  def flash_group(assigns) do
+    ~H"""
+    <div class={"live-toast-group toast-position-#{@position}"}>
+      <Toast.Components.flash_group
+        flash={@flash}
+        position={@position}
+        theme={@theme}
+        rich_colors={@rich_colors}
+      />
+    </div>
     """
   end
 

@@ -58,7 +58,7 @@ On Phoenix 1.7 there is no `hooks` option yet, so add `hooks: {Toast}`.
 
 ### 2. CSS
 
-In `assets/css/app.css`, import the stylesheet after the Tailwind import:
+In `assets/css/app.css`, import the stylesheet directly after the `@import "tailwindcss"` line:
 
 ```css
 @import "tailwindcss" source(none);
@@ -89,14 +89,12 @@ def app(assigns) do
   <%!-- generated <header> and <main> stay as they are --%>
 
   <Toast.toast_group :if={@live} flash={@flash} connection_toasts={true} />
-  <div :if={!@live} class="live-toast-group toast-position-bottom-right">
-    <Toast.Components.flash_group flash={@flash} />
-  </div>
+  <Toast.flash_group :if={!@live} flash={@flash} />
   """
 end
 ```
 
-Controller templates that use `Layouts.app` are not LiveViews, so they pass `live={false}` and get a plain flash list in the same style:
+Controller templates that use `Layouts.app` are not LiveViews, so they pass `live={false}` and get a plain flash list in the same style. If you set `position`, `theme` or `rich_colors` on `Toast.toast_group`, pass the same values to `Toast.flash_group`:
 
 ```heex
 <Layouts.app flash={@flash} live={false}>
@@ -106,13 +104,13 @@ Controller templates that use `Layouts.app` are not LiveViews, so they pass `liv
 
 Without `live={false}`, a controller page that uses `Layouts.app` fails with the same error as above. On controller pages the flash close button does nothing, because the JavaScript hook only runs in a LiveView.
 
+The generated home page, `lib/my_app_web/controllers/page_html/home.html.heex`, doesn't use `Layouts.app` and renders `<Layouts.flash_group flash={@flash} />` itself. Replace that line with `<Toast.flash_group flash={@flash} />`. Phoenix's own flash relies on daisyUI's `toast` class, which the `exclude: toast;` line above removes.
+
 **Phoenix 1.7:** `app.html.heex` is the layout for both LiveViews and controllers, and only LiveViews have `@socket`. Replace `<.flash_group flash={@flash} />` with:
 
 ```heex
 <Toast.toast_group :if={assigns[:socket]} flash={@flash} connection_toasts={true} />
-<div :if={!assigns[:socket]} class="live-toast-group toast-position-bottom-right">
-  <Toast.Components.flash_group flash={@flash} />
-</div>
+<Toast.flash_group :if={!assigns[:socket]} flash={@flash} />
 ```
 
 ## Basic Usage
@@ -228,8 +226,8 @@ Configure the toast container with these attributes:
 - A `data-theme="light"` attribute on an ancestor gives light toasts, even when the OS is dark.
 - With neither, toasts follow the OS setting via `prefers-color-scheme`.
 
-This matches the light / dark / system toggle in Phoenix 1.8's generated layout, which sets
-`data-theme` on `<html>` and removes it for "system".
+This works with the light / dark / system toggle in Phoenix 1.8's generated layout, which
+sets `data-theme` on `<html>` to the chosen or OS theme.
 
 ### Connection Toasts
 
