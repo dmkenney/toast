@@ -21,6 +21,13 @@ defmodule Toast.TestApp do
       """
     end
 
+    def custom_id(assigns) do
+      ~H"""
+      <Toast.toast_group id="notifications" flash={@flash} connection_toasts={true} />
+      {@inner_content}
+      """
+    end
+
     def system_theme(assigns) do
       ~H"""
       <Toast.toast_group flash={@flash} theme="system" rich_colors={true} />
@@ -181,6 +188,40 @@ defmodule Toast.TestApp do
     end
   end
 
+  defmodule CustomIdLive do
+    use Phoenix.LiveView
+
+    def mount(_params, _session, socket) do
+      {:ok, socket, layout: {Layouts, :custom_id}}
+    end
+
+    def render(assigns) do
+      ~H"""
+      <h1>Custom id</h1>
+      """
+    end
+
+    def handle_event("send", %{"id" => id, "message" => message}, socket) do
+      Toast.send_toast(:loading, message, id: id, duration: 0)
+      {:noreply, socket}
+    end
+
+    def handle_event("update", %{"id" => id, "message" => message}, socket) do
+      Toast.update_toast(id, type: :success, message: message)
+      {:noreply, socket}
+    end
+
+    def handle_event("clear", %{"id" => id}, socket) do
+      Toast.clear_toast(id)
+      {:noreply, socket}
+    end
+
+    def handle_event("clear_all", _params, socket) do
+      Toast.clear_all_toasts()
+      {:noreply, socket}
+    end
+  end
+
   defmodule MountToastLive do
     use Phoenix.LiveView
 
@@ -212,6 +253,7 @@ defmodule Toast.TestApp do
       live("/system-theme", SystemThemeLive)
       live("/connection", ConnectionLive)
       live("/mount-toast", MountToastLive)
+      live("/custom-id", CustomIdLive)
     end
   end
 

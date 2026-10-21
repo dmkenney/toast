@@ -167,7 +167,8 @@ defmodule Toast do
 
   ## Attributes
 
-  * `:id` - The ID of the toast group container (default: "toast-group")
+  * `:id` - DOM id of the toast list. The connection toasts use `"<id>-client-error"` and
+    `"<id>-server-error"` (default: "toast-group"). Render one toast group per page.
   * `:flash` - The flash assigns from the socket
   * `:position` - Position of toasts: "top-left", "top-center", "top-right", "bottom-left", "bottom-center", "bottom-right" (default: "bottom-right")
   * `:theme` - Theme: "light", "dark", or "system" to follow the OS color scheme (default: "light")
@@ -211,7 +212,8 @@ defmodule Toast do
     ~H"""
       <.live_component
         module={Toast.LiveComponent}
-        id={@id}
+        id="toast-group"
+        dom_id={@id}
         flash={@flash}
         position={@position}
         theme={@theme}
