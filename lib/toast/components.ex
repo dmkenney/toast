@@ -220,23 +220,29 @@ defmodule Toast.Components do
 
     ~H"""
     <div class={["flash-messages", "flash-position-#{@position}"]} data-theme={@theme} data-rich-colors={to_string(@rich_colors)}>
-      <%= for {type, message} <- @messages do %>
-        <div class={["toast", "toast-flash", "toast-#{flash_type_to_toast_type(type)}"]} 
-             id={"flash-#{type}-#{System.unique_integer([:positive])}"}
-             data-flash-key={type}
-             data-flash-type={type}
+      <%= for message <- @messages do %>
+        <div class={["toast", "toast-flash", "toast-#{flash_type_to_toast_type(message.type)}"]} 
+             id={"flash-#{message.key}"}
+             data-flash-key={message.key}
+             data-flash-type={message.type}
              data-mounted="true"
              role="status"
              aria-live="polite">
-          <%= if icon = render_flash_icon(type) do %>
+          <%= if icon = render_flash_icon(message.type) do %>
             <div class="toast-icon">
               <%= icon %>
             </div>
           <% end %>
 
           <div class="toast-content">
+            <div :if={message.title} class="toast-title">
+              <%= render_content(message.title) %>
+            </div>
             <div class="toast-message">
-              <%= render_content(message) %>
+              <%= render_content(message.message) %>
+            </div>
+            <div :if={message.description} class="toast-description">
+              <%= render_content(message.description) %>
             </div>
           </div>
 
@@ -244,8 +250,8 @@ defmodule Toast.Components do
             type="button"
             class="toast-close"
             data-close-flash
-            data-flash-key={type}
-            data-flash-type={type}
+            data-flash-key={message.key}
+            data-flash-type={message.type}
             aria-label="Close"
           >
             ×
@@ -257,8 +263,19 @@ defmodule Toast.Components do
   end
 
   # Toasts from Toast.put_toast/4 are stored in the flash as maps.
-  defp flash_message({_key, %{type: type, message: message}}), do: {type, message}
-  defp flash_message({type, message}), do: {type, message}
+  defp flash_message({key, %{type: _, message: _} = toast}) do
+    %{
+      key: key,
+      type: toast.type,
+      title: toast[:title],
+      message: toast.message,
+      description: toast[:description]
+    }
+  end
+
+  defp flash_message({key, message}) do
+    %{key: key, type: key, title: nil, message: message, description: nil}
+  end
 
   defp flash_type_to_toast_type(:error), do: :error
   defp flash_type_to_toast_type("error"), do: :error
