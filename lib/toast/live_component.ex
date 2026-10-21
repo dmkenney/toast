@@ -209,8 +209,11 @@ defmodule Toast.LiveComponent do
         key |> String.replace_prefix(Toast.flash_prefix(), "") |> String.to_integer()
       end)
       |> Enum.reduce(socket, fn {_key, toast}, socket ->
+        toast = struct(Toast, toast)
+
         socket
-        |> stream_insert(:toasts, struct(Toast, toast), at: 0)
+        |> stream_insert(:toasts, toast, at: 0)
+        |> update(:toasts_by_id, &Map.put(&1, toast.id, toast))
         |> update(:toast_count, &(&1 + 1))
       end)
 
