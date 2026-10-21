@@ -226,7 +226,17 @@ export default {
     toastEl.style.transition = "none";
     toastInfo.height = toastEl.getBoundingClientRect().height;
     toastEl.style.height = toastInfo.height + 'px';
+
+    // The new element has none of the position styles set by updateToasts, so
+    // set them now and apply them before transitions come back on. Otherwise it
+    // animates in from the unmounted state or is drawn at offset 0.
+    const toastElements = Array.from(this.el.querySelectorAll('[id^="toasts-"]'));
+    toastEl.style.setProperty('--z-index', toastElements.length - index);
+    if (this.expanded) {
+      toastEl.style.setProperty('--offset', `${this.expandedOffset(toastElements, index)}px`);
+    }
     toastEl.setAttribute('data-mounted', 'true');
+    toastEl.getBoundingClientRect();
     setTimeout(() => {
       toastEl.style.transition = `all ${this.animationDuration}ms cubic-bezier(0.21, 1.02, 0.73, 1)`;
     }, 10);
@@ -285,17 +295,22 @@ export default {
 
         // Calculate offset for expanded view
         if (this.expanded) {
-          let offset = 0;
-          for (let i = 0; i < index; i++) {
-            const prevInfo = this.toasts.get(toastElements[i].id);
-            if (prevInfo) {
-              offset += prevInfo.height + this.gap;
-            }
-          }
-          toastEl.style.setProperty('--offset', `${offset}px`);
+          toastEl.style.setProperty('--offset', `${this.expandedOffset(toastElements, index)}px`);
         }
       });
     });
+  },
+
+  // Distance from the front of the group to the toast at index, when expanded
+  expandedOffset(toastElements, index) {
+    let offset = 0;
+    for (let i = 0; i < index; i++) {
+      const prevInfo = this.toasts.get(toastElements[i].id);
+      if (prevInfo) {
+        offset += prevInfo.height + this.gap;
+      }
+    }
+    return offset;
   },
 
   setupToastInteractions(domId, toastEl, toastInfo) {
