@@ -350,6 +350,8 @@ export default {
     if (actionBtn) {
       actionBtn.addEventListener('click', () => {
         const toastId = toastEl.dataset.toastId;
+        // The server fades the toast out after its action, so hide it now
+        this.hideRemovedToast(toastInfo);
         this.pushFrom(actionBtn, "action", {
           toast_id: toastId,
           action: actionBtn.dataset.toastAction
@@ -397,6 +399,13 @@ export default {
   // Ask the server to remove the toast from the stream. Hide it right away, so
   // closing it still works while disconnected.
   removeToastFromServer(toastInfo) {
+    this.hideRemovedToast(toastInfo);
+    this.pushFrom(toastInfo.element, "clear", { id: toastInfo.toastId });
+  },
+
+  // Hide a toast the server is about to remove. It stays in the DOM until the
+  // server takes it out of the stream, but no longer counts toward max_toasts.
+  hideRemovedToast(toastInfo) {
     if (toastInfo.timer) {
       clearTimeout(toastInfo.timer);
       toastInfo.timer = null;
@@ -405,7 +414,6 @@ export default {
     toastInfo.element.setAttribute('data-removed', 'true');
     toastInfo.element.style.opacity = "0";
     toastInfo.element.style.pointerEvents = "none";
-    this.pushFrom(toastInfo.element, "clear", { id: toastInfo.toastId });
   },
 
   // Push a toast's event with a JS command, which locks only el until the
@@ -429,7 +437,11 @@ export default {
   // Fade out toasts over the limit. The server removes them from the stream
   // once the fade has run, so they stay hidden until then.
   applyToastLimit() {
-    const toastElements = Array.from(this.el.querySelectorAll('[id^="toasts-"]'));
+    // Toasts on their way out (closed, timed out or actioned) don't count.
+    // Counting them hides the oldest toast for good when a new one arrives
+    // before they leave the DOM.
+    const toastElements = Array.from(this.el.querySelectorAll('[id^="toasts-"]'))
+      .filter(el => !this.toasts.get(el.id)?.removed);
 
     // Apply visibility based on index (not position-dependent order)
     toastElements.forEach((el, index) => {
