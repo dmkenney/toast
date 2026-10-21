@@ -10,6 +10,7 @@ defmodule Toast.MixProject do
       version: @version,
       elixir: "~> 1.14",
       start_permanent: Mix.env() == :prod,
+      elixirc_paths: elixirc_paths(Mix.env()),
       deps: deps(),
       docs: docs(),
       description: description(),
@@ -30,9 +31,13 @@ defmodule Toast.MixProject do
       {:phoenix, "~> 1.7"},
       {:phoenix_live_view, "~> 0.20 or ~> 1.0"},
       {:jason, "~> 1.4"},
-      {:ex_doc, "~> 0.31", only: :dev, runtime: false}
+      {:ex_doc, "~> 0.31", only: :dev, runtime: false},
+      {:floki, "~> 0.36", only: :test}
     ]
   end
+
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 
   defp description do
     """
