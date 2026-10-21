@@ -211,7 +211,7 @@ export default {
         clearTimeout(toastInfo.timer);
         toastInfo.timer = null;
       }
-      if (toastInfo.duration > 0 && (this.maxToasts === null || index < this.maxToasts)) {
+      if (toastInfo.duration > 0 && !toastInfo.overLimit) {
         toastInfo.timer = setTimeout(() => {
           this.removeToastFromServer(toastId);
         }, toastInfo.duration);
@@ -424,40 +424,23 @@ export default {
     this.pushEventTo(this.el, "clear", { id: toastId });
   },
 
+  // Fade out toasts over the limit. The server removes them from the stream
+  // once the fade has run, so they stay hidden until then.
   applyToastLimit() {
     const toastElements = Array.from(this.el.querySelectorAll('[id^="toasts-"]'));
 
     // Apply visibility based on index (not position-dependent order)
     toastElements.forEach((el, index) => {
-      const toastEl = el.querySelector('.toast:not(.toast-flash)');
-      if (!toastEl) return;
-
       const toastInfo = this.toasts.get(el.id);
-      if (!toastInfo) return;
+      if (!toastInfo || (index < this.maxToasts && !toastInfo.overLimit)) return;
 
-      if (index >= this.maxToasts) {
-        // Hide toasts beyond limit
-        toastEl.style.opacity = "0";
-        toastEl.style.pointerEvents = "none";
-        toastEl.classList.remove('pointer-events-auto');
-
-        // Schedule automatic removal if not already scheduled
-        if (!toastInfo.removalScheduled) {
-          toastInfo.removalScheduled = true;
-          const toastId = toastEl.dataset.toastId;
-
-          // Wait for animation to complete before removing
-          setTimeout(() => {
-            this.removeToastFromServer(toastId);
-          }, this.animationDuration); // Animation duration
-        }
-      } else {
-        // Show toasts within limit
-        toastEl.style.opacity = "1";
-        toastEl.style.pointerEvents = "auto";
-        toastEl.classList.add('pointer-events-auto');
-        toastInfo.removalScheduled = false;
+      toastInfo.overLimit = true;
+      if (toastInfo.timer) {
+        clearTimeout(toastInfo.timer);
+        toastInfo.timer = null;
       }
+      toastInfo.element.style.opacity = "0";
+      toastInfo.element.style.pointerEvents = "none";
     });
   },
 

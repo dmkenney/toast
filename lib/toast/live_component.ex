@@ -22,7 +22,8 @@ defmodule Toast.LiveComponent do
 
   It also accepts `:update_toast` via `send_update/3` (see `Toast.update_toast/2`).
   A map of toast structs by ID is kept alongside the stream so updates can be
-  merged into the existing toast.
+  merged into the existing toast, with a list of their IDs, newest first, to
+  enforce `:max_toasts`.
   """
 
   use Phoenix.LiveComponent
@@ -34,8 +35,8 @@ defmodule Toast.LiveComponent do
     {:ok,
      socket
      |> stream(:toasts, [])
-     |> assign(:toast_count, 0)
      |> assign(:toasts_by_id, %{})
+     |> assign(:toast_ids, [])
      |> assign(:max_toasts, nil)
      |> assign(:flash_messages, %{})
      |> assign(:flash_toast_keys, MapSet.new())}
@@ -76,30 +77,22 @@ defmodule Toast.LiveComponent do
     socket =
       cond do
         toast = assigns[:toast] ->
-          socket
-          |> stream_insert(:toasts, toast, at: 0)
-          |> update(:toasts_by_id, &Map.put(&1, toast.id, toast))
-          |> update(:toast_count, &(&1 + 1))
+          insert_toast(socket, toast)
 
         update = assigns[:update_toast] ->
           update_toast(socket, update.id, update.updates)
 
         id = assigns[:clear] ->
-          socket
-          |> delete_toast(id)
-          |> update(:toast_count, &max(&1 - 1, 0))
+          delete_toast(socket, id)
 
         assigns[:clear_all] ->
-          socket
-          |> stream(:toasts, [], reset: true)
-          |> assign(:toasts_by_id, %{})
-          |> assign(:toast_count, 0)
+          clear_all(socket)
 
         true ->
           socket
       end
 
-    {:ok, socket}
+    {:ok, enforce_max_toasts(socket)}
   end
 
   @impl true
@@ -146,11 +139,7 @@ defmodule Toast.LiveComponent do
   end
 
   def handle_event("clear-all", _params, socket) do
-    {:noreply,
-     socket
-     |> stream(:toasts, [], reset: true)
-     |> assign(:toasts_by_id, %{})
-     |> assign(:toast_count, 0)}
+    {:noreply, clear_all(socket)}
   end
 
   def handle_event("action", %{"toast_id" => toast_id}, socket) do
@@ -191,10 +180,48 @@ defmodule Toast.LiveComponent do
     end
   end
 
+  defp insert_toast(socket, toast) do
+    socket
+    |> stream_insert(:toasts, toast, at: 0)
+    |> update(:toasts_by_id, &Map.put(&1, toast.id, toast))
+    |> update(:toast_ids, &[toast.id | List.delete(&1, toast.id)])
+  end
+
+  # Drop the oldest toasts over the limit. The client fades them out as soon as
+  # they pass the limit, so take them out of the stream once that has run. The
+  # client used to send a "clear" for each one, but every push locks the stream
+  # container until its reply, and overlapping locks put removed toasts back.
+  defp enforce_max_toasts(socket) do
+    %{max_toasts: max, toast_ids: ids} = socket.assigns
+
+    if is_integer(max) and max > 0 and length(ids) > max do
+      {ids, removed} = Enum.split(ids, max)
+      delay = socket.assigns[:animation_duration] || 400
+
+      for id <- removed do
+        send_update_after(socket.assigns.myself, %{clear: id}, delay)
+      end
+
+      socket
+      |> assign(:toast_ids, ids)
+      |> update(:toasts_by_id, &Map.drop(&1, removed))
+    else
+      socket
+    end
+  end
+
   defp delete_toast(socket, id) do
     socket
     |> stream_delete(:toasts, %{id: id})
     |> update(:toasts_by_id, &Map.delete(&1, id))
+    |> update(:toast_ids, &List.delete(&1, id))
+  end
+
+  defp clear_all(socket) do
+    socket
+    |> stream(:toasts, [], reset: true)
+    |> assign(:toasts_by_id, %{})
+    |> assign(:toast_ids, [])
   end
 
   defp flash_toast?(key), do: is_binary(key) and String.starts_with?(key, Toast.flash_prefix())
@@ -219,12 +246,7 @@ defmodule Toast.LiveComponent do
         key |> String.replace_prefix(Toast.flash_prefix(), "") |> String.to_integer()
       end)
       |> Enum.reduce(socket, fn {_key, toast}, socket ->
-        toast = struct(Toast, toast)
-
-        socket
-        |> stream_insert(:toasts, toast, at: 0)
-        |> update(:toasts_by_id, &Map.put(&1, toast.id, toast))
-        |> update(:toast_count, &(&1 + 1))
+        insert_toast(socket, struct(Toast, toast))
       end)
 
     assign(socket, :flash_toast_keys, MapSet.new(toasts, fn {key, _} -> key end))

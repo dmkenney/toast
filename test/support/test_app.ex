@@ -195,6 +195,26 @@ defmodule Toast.TestApp do
     end
   end
 
+  defmodule LimitLive do
+    use Phoenix.LiveView
+
+    def render(assigns) do
+      ~H"""
+      <Toast.toast_group flash={@flash} max_toasts={2} animation_duration={10} />
+      """
+    end
+
+    def handle_event("toast", %{"id" => id}, socket) do
+      Toast.send_toast(:info, "Toast #{id}", id: id, duration: 0)
+      {:noreply, socket}
+    end
+
+    def handle_event("update_toast", %{"id" => id, "message" => message}, socket) do
+      Toast.update_toast(id, message: message)
+      {:noreply, socket}
+    end
+  end
+
   defmodule Router do
     use Phoenix.Router
     import Phoenix.LiveView.Router
@@ -212,6 +232,7 @@ defmodule Toast.TestApp do
       live("/system-theme", SystemThemeLive)
       live("/connection", ConnectionLive)
       live("/mount-toast", MountToastLive)
+      live("/limit", LimitLive)
     end
   end
 

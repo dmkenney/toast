@@ -315,7 +315,7 @@ When multiple toasts are displayed:
 - Toasts stack with the newest on top
 - Hovering expands the stack to show all toasts
 - Set `expanded={true}` to turn off stacking and always show toasts expanded
-- Only `max_toasts` are visible (extras are queued)
+- Only the newest `max_toasts` are kept. Older ones fade out and are removed
 - Toasts animate smoothly when added/removed
 
 ## CSS Customization
