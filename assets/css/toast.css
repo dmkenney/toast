@@ -332,7 +332,7 @@
 
 /* Dark mode with rich colors */
 .dark [data-rich-colors='true'] .toast-success,
-[data-theme='dark'] [data-rich-colors='true'] .toast-success {
+[data-theme='dark'][data-rich-colors='true'] .toast-success {
   --toast-bg: hsl(150, 100%, 6%);
   --toast-color: hsl(150, 86%, 65%);
   --toast-border: hsl(147, 100%, 12%);
@@ -340,7 +340,7 @@
 }
 
 .dark [data-rich-colors='true'] .toast-error,
-[data-theme='dark'] [data-rich-colors='true'] .toast-error {
+[data-theme='dark'][data-rich-colors='true'] .toast-error {
   --toast-bg: hsl(358, 76%, 10%);
   --toast-color: hsl(358, 100%, 81%);
   --toast-border: hsl(357, 89%, 16%);
@@ -348,7 +348,7 @@
 }
 
 .dark [data-rich-colors='true'] .toast-warning,
-[data-theme='dark'] [data-rich-colors='true'] .toast-warning {
+[data-theme='dark'][data-rich-colors='true'] .toast-warning {
   --toast-bg: hsl(64, 100%, 6%);
   --toast-color: hsl(46, 87%, 65%);
   --toast-border: hsl(60, 100%, 9%);
@@ -356,7 +356,7 @@
 }
 
 .dark [data-rich-colors='true'] .toast-info,
-[data-theme='dark'] [data-rich-colors='true'] .toast-info {
+[data-theme='dark'][data-rich-colors='true'] .toast-info {
   --toast-bg: hsl(215, 100%, 6%);
   --toast-color: hsl(216, 87%, 65%);
   --toast-border: hsl(223, 43%, 17%);
@@ -510,25 +510,25 @@
 
 /* Dark theme with rich colors for inline action buttons */
 .dark [data-rich-colors='true'] .toast-success .toast-action-inline,
-[data-theme='dark'] [data-rich-colors='true'] .toast-success .toast-action-inline {
+[data-theme='dark'][data-rich-colors='true'] .toast-success .toast-action-inline {
   background: hsl(150, 86%, 65%);
   color: #000;
 }
 
 .dark [data-rich-colors='true'] .toast-error .toast-action-inline,
-[data-theme='dark'] [data-rich-colors='true'] .toast-error .toast-action-inline {
+[data-theme='dark'][data-rich-colors='true'] .toast-error .toast-action-inline {
   background: hsl(358, 100%, 81%);
   color: #000;
 }
 
 .dark [data-rich-colors='true'] .toast-warning .toast-action-inline,
-[data-theme='dark'] [data-rich-colors='true'] .toast-warning .toast-action-inline {
+[data-theme='dark'][data-rich-colors='true'] .toast-warning .toast-action-inline {
   background: hsl(46, 87%, 65%);
   color: #000;
 }
 
 .dark [data-rich-colors='true'] .toast-info .toast-action-inline,
-[data-theme='dark'] [data-rich-colors='true'] .toast-info .toast-action-inline {
+[data-theme='dark'][data-rich-colors='true'] .toast-info .toast-action-inline {
   background: hsl(216, 87%, 65%);
   color: #000;
 }
@@ -589,22 +589,22 @@
 
 /* Dark theme with rich colors for close button */
 .dark [data-rich-colors='true'] .toast-success .toast-close,
-[data-theme='dark'] [data-rich-colors='true'] .toast-success .toast-close {
+[data-theme='dark'][data-rich-colors='true'] .toast-success .toast-close {
   color: hsl(150, 86%, 65%);
 }
 
 .dark [data-rich-colors='true'] .toast-error .toast-close,
-[data-theme='dark'] [data-rich-colors='true'] .toast-error .toast-close {
+[data-theme='dark'][data-rich-colors='true'] .toast-error .toast-close {
   color: hsl(358, 100%, 81%);
 }
 
 .dark [data-rich-colors='true'] .toast-warning .toast-close,
-[data-theme='dark'] [data-rich-colors='true'] .toast-warning .toast-close {
+[data-theme='dark'][data-rich-colors='true'] .toast-warning .toast-close {
   color: hsl(46, 87%, 65%);
 }
 
 .dark [data-rich-colors='true'] .toast-info .toast-close,
-[data-theme='dark'] [data-rich-colors='true'] .toast-info .toast-close {
+[data-theme='dark'][data-rich-colors='true'] .toast-info .toast-close {
   color: hsl(216, 87%, 65%);
 }
 
