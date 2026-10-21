@@ -281,30 +281,30 @@
 /* Toast types with rich colors */
 :where(.live-toast-group) [data-rich-colors='true'] .toast-success {
   --toast-bg: hsl(143, 85%, 96%);
-  --toast-color: hsl(140, 100%, 27%);
+  --toast-color: hsl(140, 100%, 26%);
   --toast-border: hsl(145, 92%, 87%);
-  --toast-icon-color: hsl(140, 100%, 27%);
+  --toast-icon-color: hsl(140, 100%, 26%);
 }
 
 :where(.live-toast-group) [data-rich-colors='true'] .toast-error {
   --toast-bg: hsl(359, 100%, 97%);
-  --toast-color: hsl(360, 100%, 45%);
+  --toast-color: hsl(360, 100%, 44%);
   --toast-border: hsl(359, 100%, 94%);
-  --toast-icon-color: hsl(360, 100%, 45%);
+  --toast-icon-color: hsl(360, 100%, 44%);
 }
 
 :where(.live-toast-group) [data-rich-colors='true'] .toast-warning {
   --toast-bg: hsl(49, 100%, 97%);
-  --toast-color: hsl(31, 92%, 45%);
+  --toast-color: hsl(31, 92%, 36%);
   --toast-border: hsl(49, 91%, 84%);
-  --toast-icon-color: hsl(31, 92%, 45%);
+  --toast-icon-color: hsl(31, 92%, 36%);
 }
 
 :where(.live-toast-group) [data-rich-colors='true'] .toast-info {
   --toast-bg: hsl(208, 100%, 97%);
-  --toast-color: hsl(210, 92%, 45%);
+  --toast-color: hsl(210, 92%, 44%);
   --toast-border: hsl(221, 91%, 93%);
-  --toast-icon-color: hsl(210, 92%, 45%);
+  --toast-icon-color: hsl(210, 92%, 44%);
 }
 
 /* Default icon colors without rich colors */
@@ -465,6 +465,10 @@
   background: rgba(0, 0, 0, 0.05);
 }
 
+:where(.live-toast-group) > [data-theme]:where([data-theme='dark'], [data-theme='system']:is([data-theme='dark'] *, .dark *)) .toast-action:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
 :where(.live-toast-group) .toast-action:active {
   transform: scale(0.95);
 }
@@ -501,22 +505,22 @@
 
 /* Rich colors for inline action buttons */
 :where(.live-toast-group) [data-rich-colors='true'] .toast-success .toast-action-inline {
-  background: hsl(140, 100%, 27%);
+  background: hsl(140, 100%, 26%);
   color: #fff;
 }
 
 :where(.live-toast-group) [data-rich-colors='true'] .toast-error .toast-action-inline {
-  background: hsl(360, 100%, 45%);
+  background: hsl(360, 100%, 44%);
   color: #fff;
 }
 
 :where(.live-toast-group) [data-rich-colors='true'] .toast-warning .toast-action-inline {
-  background: hsl(31, 92%, 45%);
+  background: hsl(31, 92%, 36%);
   color: #fff;
 }
 
 :where(.live-toast-group) [data-rich-colors='true'] .toast-info .toast-action-inline {
-  background: hsl(210, 92%, 45%);
+  background: hsl(210, 92%, 44%);
   color: #fff;
 }
 
@@ -553,7 +557,7 @@
   height: 24px;
   padding: 0;
   background: transparent;
-  color: #9ca3af;
+  color: #6b7280;
   border: none;
   border-radius: 4px;
   opacity: 1;
@@ -578,19 +582,19 @@
 
 /* Rich colors for close button */
 :where(.live-toast-group) [data-rich-colors='true'] .toast-success .toast-close {
-  color: hsl(140, 100%, 27%);
+  color: hsl(140, 100%, 26%);
 }
 
 :where(.live-toast-group) [data-rich-colors='true'] .toast-error .toast-close {
-  color: hsl(360, 100%, 45%);
+  color: hsl(360, 100%, 44%);
 }
 
 :where(.live-toast-group) [data-rich-colors='true'] .toast-warning .toast-close {
-  color: hsl(31, 92%, 45%);
+  color: hsl(31, 92%, 36%);
 }
 
 :where(.live-toast-group) [data-rich-colors='true'] .toast-info .toast-close {
-  color: hsl(210, 92%, 45%);
+  color: hsl(210, 92%, 44%);
 }
 
 /* Dark theme with rich colors for close button */
@@ -658,6 +662,10 @@
 
   :where(.live-toast-group) > [data-theme]:where([data-theme='system']:not([data-theme='light'] *)) .toast-description {
     color: hsl(0, 0%, 91%);
+  }
+
+  :where(.live-toast-group) > [data-theme]:where([data-theme='system']:not([data-theme='light'] *)) .toast-action:hover {
+    background: rgba(255, 255, 255, 0.1);
   }
 
   :where(.live-toast-group) > [data-theme]:where([data-theme='system']:not([data-theme='light'] *)) .toast-action-inline {
