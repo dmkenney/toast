@@ -254,6 +254,13 @@ defmodule Toast do
     # One key per toast, so a navigation only carries the toasts put in that
     # callback. The counter keeps their order.
     key = flash_prefix() <> Integer.to_string(System.unique_integer([:positive, :monotonic]))
+
+    # A LiveComponent's flash only reaches the LiveView when it navigates, so
+    # also send the toast to the group right away.
+    if match?(%Phoenix.LiveComponent.CID{}, socket.assigns[:myself]) do
+      send_toast(type, message, opts)
+    end
+
     Phoenix.LiveView.put_flash(socket, key, toast)
   end
 

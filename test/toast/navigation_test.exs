@@ -111,5 +111,49 @@ defmodule Toast.NavigationTest do
     refute html =~ "Old toast"
   end
 
+  test "put_toast from a LiveComponent shows the toast", %{conn: conn} do
+    {:ok, view, _html} = live(conn, "/source")
+
+    view |> element("#component-toast") |> render_click()
+
+    assert view |> render() |> count("From component") == 1
+  end
+
+  test "put_toast from a LiveComponent survives push_navigate", %{conn: conn} do
+    {:ok, view, _html} = live(conn, "/source")
+
+    {:ok, target, _html} =
+      view
+      |> element("#component-toast-and-navigate")
+      |> render_click()
+      |> follow_redirect(conn, "/target")
+
+    assert render(target) =~ "Navigated from component"
+  end
+
+  test "put_toast with a reused id shows the toast again", %{conn: conn} do
+    {:ok, view, _html} = live(conn, "/source")
+
+    render_hook(view, "toast_with_id", %{"message" => "First save"})
+    assert render(view) =~ "First save"
+
+    view |> with_target(".live-toast-group") |> render_hook("clear", %{"id" => "save-toast"})
+    refute render(view) =~ "First save"
+
+    render_hook(view, "toast_with_id", %{"message" => "Second save"})
+    assert view |> render() |> count("Second save") == 1
+  end
+
+  test "put_toast with a reused id replaces a toast still on screen", %{conn: conn} do
+    {:ok, view, _html} = live(conn, "/source")
+
+    render_hook(view, "toast_with_id", %{"message" => "First save"})
+    render_hook(view, "toast_with_id", %{"message" => "Second save"})
+
+    html = render(view)
+    refute html =~ "First save"
+    assert count(html, "Second save") == 1
+  end
+
   defp count(html, text), do: length(String.split(html, text)) - 1
 end
