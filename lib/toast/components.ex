@@ -228,11 +228,9 @@ defmodule Toast.Components do
              data-mounted="true"
              role="status"
              aria-live="polite">
-          <%= if icon = render_flash_icon(message.type) do %>
-            <div class="toast-icon">
-              <%= icon %>
-            </div>
-          <% end %>
+          <div class="toast-icon">
+            <%= render_flash_icon(message.type) %>
+          </div>
 
           <div class="toast-content">
             <div :if={message.title} class="toast-title">
@@ -288,12 +286,8 @@ defmodule Toast.Components do
   # Default to info instead of :default
   defp flash_type_to_toast_type(_), do: :info
 
-  defp render_flash_icon(type) do
-    # Create a fake toast struct just for icon rendering
-    fake_toast = %{type: flash_type_to_toast_type(type)}
-    # Fallback to info icon
-    render_icon(fake_toast) || render_icon(%{type: :info})
-  end
+  # flash_type_to_toast_type/1 only returns types that have an icon.
+  defp render_flash_icon(type), do: render_icon(%{type: flash_type_to_toast_type(type)})
 
   @doc """
   Renders hidden toasts that show while the LiveView is disconnected.
