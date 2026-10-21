@@ -386,9 +386,9 @@ Toast.clear_all_toasts()
 When multiple toasts are displayed:
 
 - Toasts stack with the newest on top
-- Hovering expands the stack to show all toasts
+- Hovering expands the stack to show all toasts and pauses every toast's timer. Each one resumes with the time it had left when the pointer leaves
 - Set `expanded={true}` to turn off stacking and always show toasts expanded
-- At most `max_toasts` are shown. Older toasts beyond the limit are removed
+- Only the newest `max_toasts` are kept. Older ones fade out and are removed
 - Toasts animate smoothly when added/removed
 
 ## CSS Customization

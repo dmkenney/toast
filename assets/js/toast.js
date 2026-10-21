@@ -12,8 +12,12 @@ export default {
     this.hovered = false;
     this.expanded = this.alwaysExpanded;
 
-    // Set CSS variable for animation duration
-    this.el.parentElement.style.setProperty('--toast-animation-duration', `${this.animationDuration}ms`);
+    // Set the animation duration CSS variable in a stylesheet of our own.
+    // An inline style on the group is dropped by the next LiveView patch, and
+    // the server can't render one under a strict CSP.
+    this.styleSheet = new CSSStyleSheet();
+    document.adoptedStyleSheets = [...document.adoptedStyleSheets, this.styleSheet];
+    this.setAnimationDuration();
 
     // Handle clear-flash events from server
     this.handleEvent("clear-flash", ({ key }) => {
@@ -26,29 +30,19 @@ export default {
     // Set up flash message close buttons
     this.setupFlashMessageHandlers();
 
+    // While the pointer is over the group, every toast's timer is paused
     this.el.addEventListener("mouseenter", () => {
       this.hovered = true;
       this.expanded = true;
       this.updateToasts();
+      this.toasts.forEach(toastInfo => this.pauseTimer(toastInfo));
     });
 
     this.el.addEventListener("mouseleave", () => {
       this.hovered = false;
       this.expanded = this.alwaysExpanded;
       this.updateToasts();
-
-      // Ensure all toasts restart their timers when container is left
-      this.toasts.forEach((toastInfo, domId) => {
-        const toastEl = toastInfo.element;
-        const duration = parseInt(toastEl.dataset.duration || "6000");
-
-        // Only restart timer if it's not already running and duration is valid
-        if (!toastInfo.timer && duration > 0 && toastEl.getAttribute('data-removed') !== 'true') {
-          toastInfo.timer = setTimeout(() => {
-            this.removeToastFromServer(toastInfo.toastId);
-          }, duration);
-        }
-      });
+      this.toasts.forEach(toastInfo => this.startTimer(toastInfo));
     });
 
     // Process initial toasts
@@ -70,7 +64,7 @@ export default {
       this.animationDuration = newAnimationDuration;
       
       // Update CSS variable for animation duration
-      this.el.parentElement.style.setProperty('--toast-animation-duration', `${this.animationDuration}ms`);
+      this.setAnimationDuration();
       
       // Update transition on all existing toasts
       this.toasts.forEach((toastInfo) => {
@@ -93,13 +87,16 @@ export default {
 
     // When stream updates, reprocess toasts
     this.processToasts();
-
-    // Re-setup flash message handlers in case new ones were added
-    this.setupFlashMessageHandlers();
   },
 
   destroyed() {
     this.toasts.clear();
+    document.adoptedStyleSheets = document.adoptedStyleSheets.filter(sheet => sheet !== this.styleSheet);
+  },
+
+  setAnimationDuration() {
+    const group = `.live-toast-group:has(> #${CSS.escape(this.el.id)})`;
+    this.styleSheet.replaceSync(`${group} { --toast-animation-duration: ${this.animationDuration}ms; }`);
   },
 
   processToasts() {
@@ -156,6 +153,7 @@ export default {
       height: 80, // Default estimated height
       timer: null,
       duration: duration,
+      remaining: duration,
       domId: el.id,
       toastId: toastId
     };
@@ -207,15 +205,7 @@ export default {
       }, 10);
 
       // Set up auto-removal timer
-      if (toastInfo.timer) {
-        clearTimeout(toastInfo.timer);
-        toastInfo.timer = null;
-      }
-      if (toastInfo.duration > 0 && (this.maxToasts === null || index < this.maxToasts)) {
-        toastInfo.timer = setTimeout(() => {
-          this.removeToastFromServer(toastId);
-        }, toastInfo.duration);
-      }
+      this.startTimer(toastInfo);
     });
 
     // Handle interactions
@@ -254,15 +244,12 @@ export default {
     const duration = parseInt(toastEl.dataset.duration || "6000");
     if (duration !== toastInfo.duration) {
       toastInfo.duration = duration;
+      toastInfo.remaining = duration;
       if (toastInfo.timer) {
         clearTimeout(toastInfo.timer);
         toastInfo.timer = null;
       }
-      if (duration > 0) {
-        toastInfo.timer = setTimeout(() => {
-          this.removeToastFromServer(toastInfo.toastId);
-        }, duration);
-      }
+      this.startTimer(toastInfo);
     }
 
     this.setupToastInteractions(domId, toastEl, toastInfo);
@@ -322,36 +309,25 @@ export default {
     return offset;
   },
 
+  // Start or resume the toast's timer with the time it has left
+  startTimer(toastInfo) {
+    if (toastInfo.timer || this.hovered || toastInfo.duration <= 0 || toastInfo.overLimit || toastInfo.removed) {
+      return;
+    }
+    toastInfo.startedAt = Date.now();
+    toastInfo.timer = setTimeout(() => {
+      this.removeToastFromServer(toastInfo);
+    }, toastInfo.remaining);
+  },
+
+  pauseTimer(toastInfo) {
+    if (!toastInfo.timer) return;
+    clearTimeout(toastInfo.timer);
+    toastInfo.timer = null;
+    toastInfo.remaining -= Date.now() - toastInfo.startedAt;
+  },
+
   setupToastInteractions(domId, toastEl, toastInfo) {
-    // Store original duration
-    const originalDuration = parseInt(toastEl.dataset.duration || "6000");
-
-    // Pause timer on hover
-    toastEl.addEventListener("mouseenter", () => {
-      if (toastInfo.timer) {
-        clearTimeout(toastInfo.timer);
-        toastInfo.timer = null;
-      }
-    });
-
-    // Resume timer on mouse leave
-    toastEl.addEventListener("mouseleave", () => {
-      // Don't restart timer if toast is being removed or duration is infinite
-      if (toastEl.getAttribute('data-removed') === 'true' || originalDuration <= 0) {
-        return;
-      }
-
-      // Always restart timer when mouse leaves
-      if (toastInfo.timer) {
-        clearTimeout(toastInfo.timer);
-      }
-
-      toastInfo.timer = setTimeout(() => {
-        this.removeToastFromServer(toastInfo.toastId);
-      }, 2000); // Shorter duration after interaction
-    });
-
-
     // Handle close button
     const closeBtn = toastEl.querySelector('[data-close-toast]');
     if (closeBtn) {
@@ -365,8 +341,7 @@ export default {
           toastInfo.timer = null;
         }
 
-        const toastId = toastEl.dataset.toastId;
-        this.removeToastFromServer(toastId);
+        this.removeToastFromServer(toastInfo);
       });
     }
 
@@ -375,7 +350,7 @@ export default {
     if (actionBtn) {
       actionBtn.addEventListener('click', () => {
         const toastId = toastEl.dataset.toastId;
-        this.pushEventTo(this.el, "action", {
+        this.pushFrom(actionBtn, "action", {
           toast_id: toastId,
           action: actionBtn.dataset.toastAction
         });
@@ -419,45 +394,55 @@ export default {
     }, 100);
   },
 
-  // Send event to server to remove toast from stream
-  removeToastFromServer(toastId) {
-    this.pushEventTo(this.el, "clear", { id: toastId });
+  // Ask the server to remove the toast from the stream. Hide it right away, so
+  // closing it still works while disconnected.
+  removeToastFromServer(toastInfo) {
+    if (toastInfo.timer) {
+      clearTimeout(toastInfo.timer);
+      toastInfo.timer = null;
+    }
+    toastInfo.removed = true;
+    toastInfo.element.setAttribute('data-removed', 'true');
+    toastInfo.element.style.opacity = "0";
+    toastInfo.element.style.pointerEvents = "none";
+    this.pushFrom(toastInfo.element, "clear", { id: toastInfo.toastId });
   },
 
+  // Push a toast's event with a JS command, which locks only el until the
+  // reply. A hook push locks the hook element, the stream container, and
+  // LiveView applies patches for a locked element to a copy that replaces it
+  // on the reply. With several pushes in flight, such as timers that run out
+  // together, an older copy put removed toasts back. A JS push is also
+  // skipped while disconnected, without an error.
+  pushFrom(el, event, value) {
+    const target = `#${CSS.escape(this.el.id)}`;
+    this.liveSocket.execJS(el, JSON.stringify([["push", { event, value, target }]]), "click");
+  },
+
+  // Push without a promise. Given no reply callback, pushEvent and pushEventTo
+  // return a promise in LiveView 1.0+ that rejects while disconnected, which
+  // shows up as an unhandled rejection. LiveView 0.20 never returns one.
+  pushToServer(event, payload) {
+    this.pushEventTo(this.el, event, payload, () => {});
+  },
+
+  // Fade out toasts over the limit. The server removes them from the stream
+  // once the fade has run, so they stay hidden until then.
   applyToastLimit() {
     const toastElements = Array.from(this.el.querySelectorAll('[id^="toasts-"]'));
 
     // Apply visibility based on index (not position-dependent order)
     toastElements.forEach((el, index) => {
-      const toastEl = el.querySelector('.toast:not(.toast-flash)');
-      if (!toastEl) return;
-
       const toastInfo = this.toasts.get(el.id);
-      if (!toastInfo) return;
+      if (!toastInfo || (index < this.maxToasts && !toastInfo.overLimit)) return;
 
-      if (index >= this.maxToasts) {
-        // Hide toasts beyond limit
-        toastEl.style.opacity = "0";
-        toastEl.style.pointerEvents = "none";
-        toastEl.classList.remove('pointer-events-auto');
-
-        // Schedule automatic removal if not already scheduled
-        if (!toastInfo.removalScheduled) {
-          toastInfo.removalScheduled = true;
-          const toastId = toastEl.dataset.toastId;
-
-          // Wait for animation to complete before removing
-          setTimeout(() => {
-            this.removeToastFromServer(toastId);
-          }, this.animationDuration); // Animation duration
-        }
-      } else {
-        // Show toasts within limit
-        toastEl.style.opacity = "1";
-        toastEl.style.pointerEvents = "auto";
-        toastEl.classList.add('pointer-events-auto');
-        toastInfo.removalScheduled = false;
+      toastInfo.overLimit = true;
+      if (toastInfo.timer) {
+        clearTimeout(toastInfo.timer);
+        toastInfo.timer = null;
       }
+      toastInfo.element.style.opacity = "0";
+      toastInfo.element.style.pointerEvents = "none";
     });
   },
 
@@ -485,10 +470,10 @@ export default {
           setTimeout(() => {
             flashToast.remove();
             // Send event to server to clear flash from state
-            this.pushEventTo(this.el, "clear-flash", { key: flashKey, type: flashType });
+            this.pushToServer("clear-flash", { key: flashKey, type: flashType });
 
             // Also send event to parent LiveView to clear from Phoenix flash
-            this.pushEvent("lv:clear-flash", { key: flashKey });
+            this.pushEvent("lv:clear-flash", { key: flashKey }, () => {});
           }, this.animationDuration);
         }
       }
