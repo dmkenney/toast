@@ -200,6 +200,12 @@ defmodule Toast.LiveComponent do
   # re-render. Keys are unique per put_toast/4 call, so a reused toast id is
   # still shown again. Only keys still in the flash are kept.
   defp insert_flash_toasts(socket, toasts) do
+    # Skip the dead render: its stream items stay in the DOM after the LiveView
+    # connects, and a put_toast/4 in mount/3 runs again with a new id.
+    if connected?(socket), do: do_insert_flash_toasts(socket, toasts), else: socket
+  end
+
+  defp do_insert_flash_toasts(socket, toasts) do
     shown = socket.assigns.flash_toast_keys
 
     socket =

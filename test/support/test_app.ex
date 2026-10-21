@@ -167,6 +167,20 @@ defmodule Toast.TestApp do
     end
   end
 
+  defmodule MountToastLive do
+    use Phoenix.LiveView
+
+    def mount(_params, _session, socket) do
+      {:ok, Toast.put_toast(socket, :info, "Toast from mount"), layout: {Layouts, :app}}
+    end
+
+    def render(assigns) do
+      ~H"""
+      <h1>Mount toast</h1>
+      """
+    end
+  end
+
   defmodule Router do
     use Phoenix.Router
     import Phoenix.LiveView.Router
@@ -183,6 +197,7 @@ defmodule Toast.TestApp do
       live("/target", TargetLive)
       live("/system-theme", SystemThemeLive)
       live("/connection", ConnectionLive)
+      live("/mount-toast", MountToastLive)
     end
   end
 
