@@ -3,6 +3,8 @@
 /* Container */
 .live-toast-group {
   position: fixed;
+  display: flex;
+  flex-direction: column;
   z-index: 9999;
   pointer-events: none;
   width: 356px;
@@ -10,6 +12,11 @@
   --front-toast-height: 0px;
   --toast-animation-duration: 400ms;
   gap: 16px;
+}
+
+/* Stream container */
+.live-toast-stream {
+  position: relative;
 }
 
 /* Position classes */

@@ -83,17 +83,17 @@ defmodule Toast.LiveComponent do
     assigns = assign(assigns, :is_top_position, is_top_position)
 
     ~H"""
-    <div class={"live-toast-group toast-position-#{@computed_position}"} style="display: flex; flex-direction: column;">
+    <div class={"live-toast-group toast-position-#{@computed_position}"}>
       <Toast.Components.flash_group :if={@is_top_position && map_size(@flash_messages) > 0} flash={@flash_messages} position={@computed_position} theme={assigns[:theme] || "light"} rich_colors={assigns[:rich_colors] || false} />
       <div 
         id={assigns[:id] || "toast-group"}
+        class="live-toast-stream"
         data-theme={assigns[:theme] || "light"}
         data-rich-colors={to_string(assigns[:rich_colors] || false)}
         data-max-toasts={assigns[:max_toasts]}
         data-animation-duration={assigns[:animation_duration] || 400}
         phx-update="stream"
         phx-hook="Toast"
-        style="position: relative;"
       >
         <div :for={{dom_id, toast} <- @streams.toasts} id={dom_id}>
           <Components.toast toast={toast} />
