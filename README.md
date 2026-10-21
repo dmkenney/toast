@@ -291,6 +291,10 @@ Toast uses CSS custom properties for easy theming:
 }
 ```
 
+## Content Security Policy
+
+Toast renders no inline `style` attributes or `<style>` elements, so it works under a strict CSP such as `style-src 'self'` without `'unsafe-inline'`. Load `toast.css` as part of your own stylesheet. Any HTML you pass in yourself (custom icons, `Phoenix.HTML.raw/1` content) must also avoid inline styles.
+
 ## Acknowledgments
 
 Toast was heavily influenced by:
