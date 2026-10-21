@@ -12,8 +12,12 @@ export default {
     this.hovered = false;
     this.expanded = this.alwaysExpanded;
 
-    // Set CSS variable for animation duration
-    this.el.parentElement.style.setProperty('--toast-animation-duration', `${this.animationDuration}ms`);
+    // Set the animation duration CSS variable in a stylesheet of our own.
+    // An inline style on the group is dropped by the next LiveView patch, and
+    // the server can't render one under a strict CSP.
+    this.styleSheet = new CSSStyleSheet();
+    document.adoptedStyleSheets = [...document.adoptedStyleSheets, this.styleSheet];
+    this.setAnimationDuration();
 
     // Handle clear-flash events from server
     this.handleEvent("clear-flash", ({ key }) => {
@@ -70,7 +74,7 @@ export default {
       this.animationDuration = newAnimationDuration;
       
       // Update CSS variable for animation duration
-      this.el.parentElement.style.setProperty('--toast-animation-duration', `${this.animationDuration}ms`);
+      this.setAnimationDuration();
       
       // Update transition on all existing toasts
       this.toasts.forEach((toastInfo) => {
@@ -100,6 +104,12 @@ export default {
 
   destroyed() {
     this.toasts.clear();
+    document.adoptedStyleSheets = document.adoptedStyleSheets.filter(sheet => sheet !== this.styleSheet);
+  },
+
+  setAnimationDuration() {
+    const group = `.live-toast-group:has(> #${CSS.escape(this.el.id)})`;
+    this.styleSheet.replaceSync(`${group} { --toast-animation-duration: ${this.animationDuration}ms; }`);
   },
 
   processToasts() {
