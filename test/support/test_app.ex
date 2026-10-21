@@ -20,6 +20,13 @@ defmodule Toast.TestApp do
       {@inner_content}
       """
     end
+
+    def system_theme(assigns) do
+      ~H"""
+      <Toast.toast_group flash={@flash} theme="system" rich_colors={true} />
+      {@inner_content}
+      """
+    end
   end
 
   defmodule SourceLive do
@@ -68,6 +75,24 @@ defmodule Toast.TestApp do
     end
   end
 
+  defmodule SystemThemeLive do
+    use Phoenix.LiveView
+
+    def mount(_params, _session, socket) do
+      {:ok, socket, layout: {Layouts, :system_theme}}
+    end
+
+    def render(assigns) do
+      ~H"""
+      <h1>System theme</h1>
+      """
+    end
+
+    def handle_event("flash", %{"message" => message}, socket) do
+      {:noreply, put_flash(socket, :info, message)}
+    end
+  end
+
   defmodule Router do
     use Phoenix.Router
     import Phoenix.LiveView.Router
@@ -82,6 +107,7 @@ defmodule Toast.TestApp do
       pipe_through(:browser)
       live("/source", SourceLive)
       live("/target", TargetLive)
+      live("/system-theme", SystemThemeLive)
     end
   end
 

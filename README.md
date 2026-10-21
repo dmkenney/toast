@@ -153,7 +153,7 @@ Configure the toast container with these attributes:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `position` | string | `"bottom-right"` | Position of toasts: `"top-left"`, `"top-center"`, `"top-right"`, `"bottom-left"`, `"bottom-center"`, `"bottom-right"` |
-| `theme` | string | `"light"` | Theme style: `"light"` or `"dark"` |
+| `theme` | string | `"light"` | Theme style: `"light"`, `"dark"`, or `"system"` (follows the OS light/dark setting via `prefers-color-scheme`) |
 | `rich_colors` | boolean | `false` | Use more vibrant colors for toast types |
 | `max_toasts` | integer | `3` | Maximum number of visible toasts |
 | `animation_duration` | integer | `400` | Duration of animations in milliseconds |

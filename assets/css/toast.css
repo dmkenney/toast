@@ -608,6 +608,105 @@
   color: hsl(216, 87%, 65%);
 }
 
+/* System theme: follow the OS color scheme */
+@media (prefers-color-scheme: dark) {
+  [data-theme='system'] .toast {
+    --toast-bg: #000;
+    --toast-color: hsl(0, 0%, 99%);
+    --toast-border: hsl(0, 0%, 20%);
+  }
+
+  [data-theme='system'] .toast:hover {
+    --toast-bg: hsl(0, 0%, 12%);
+    --toast-border: hsl(0, 0%, 25%);
+  }
+
+  [data-theme='system'][data-rich-colors='true'] .toast-success {
+    --toast-bg: hsl(150, 100%, 6%);
+    --toast-color: hsl(150, 86%, 65%);
+    --toast-border: hsl(147, 100%, 12%);
+    --toast-icon-color: hsl(150, 86%, 65%);
+  }
+
+  [data-theme='system'][data-rich-colors='true'] .toast-error {
+    --toast-bg: hsl(358, 76%, 10%);
+    --toast-color: hsl(358, 100%, 81%);
+    --toast-border: hsl(357, 89%, 16%);
+    --toast-icon-color: hsl(358, 100%, 81%);
+  }
+
+  [data-theme='system'][data-rich-colors='true'] .toast-warning {
+    --toast-bg: hsl(64, 100%, 6%);
+    --toast-color: hsl(46, 87%, 65%);
+    --toast-border: hsl(60, 100%, 9%);
+    --toast-icon-color: hsl(46, 87%, 65%);
+  }
+
+  [data-theme='system'][data-rich-colors='true'] .toast-info {
+    --toast-bg: hsl(215, 100%, 6%);
+    --toast-color: hsl(216, 87%, 65%);
+    --toast-border: hsl(223, 43%, 17%);
+    --toast-icon-color: hsl(216, 87%, 65%);
+  }
+
+  [data-theme='system'] .toast-loading {
+    --toast-icon-color: hsl(0, 0%, 99%);
+  }
+
+  [data-theme='system'] .toast-description {
+    color: hsl(0, 0%, 91%);
+  }
+
+  [data-theme='system'] .toast-action-inline {
+    background: #fff;
+    color: #000;
+  }
+
+  [data-theme='system'][data-rich-colors='true'] .toast-success .toast-action-inline {
+    background: hsl(150, 86%, 65%);
+    color: #000;
+  }
+
+  [data-theme='system'][data-rich-colors='true'] .toast-error .toast-action-inline {
+    background: hsl(358, 100%, 81%);
+    color: #000;
+  }
+
+  [data-theme='system'][data-rich-colors='true'] .toast-warning .toast-action-inline {
+    background: hsl(46, 87%, 65%);
+    color: #000;
+  }
+
+  [data-theme='system'][data-rich-colors='true'] .toast-info .toast-action-inline {
+    background: hsl(216, 87%, 65%);
+    color: #000;
+  }
+
+  [data-theme='system'] .toast-close {
+    color: #6b7280;
+  }
+
+  [data-theme='system'] .toast-close:hover {
+    color: #d1d5db;
+  }
+
+  [data-theme='system'][data-rich-colors='true'] .toast-success .toast-close {
+    color: hsl(150, 86%, 65%);
+  }
+
+  [data-theme='system'][data-rich-colors='true'] .toast-error .toast-close {
+    color: hsl(358, 100%, 81%);
+  }
+
+  [data-theme='system'][data-rich-colors='true'] .toast-warning .toast-close {
+    color: hsl(46, 87%, 65%);
+  }
+
+  [data-theme='system'][data-rich-colors='true'] .toast-info .toast-close {
+    color: hsl(216, 87%, 65%);
+  }
+}
+
 
 /* Responsive */
 @media (max-width: 640px) {
