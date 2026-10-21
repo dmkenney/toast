@@ -9,6 +9,7 @@ export default {
     this.maxToasts = parseInt(this.el.dataset.maxToasts) || null;
     this.animationDuration = parseInt(this.el.dataset.animationDuration) || 400;
     this.alwaysExpanded = this.el.dataset.expanded === "true";
+    this.hovered = false;
     this.expanded = this.alwaysExpanded;
 
     // Set CSS variable for animation duration
@@ -26,11 +27,13 @@ export default {
     this.setupFlashMessageHandlers();
 
     this.el.addEventListener("mouseenter", () => {
+      this.hovered = true;
       this.expanded = true;
       this.updateToasts();
     });
 
     this.el.addEventListener("mouseleave", () => {
+      this.hovered = false;
       this.expanded = this.alwaysExpanded;
       this.updateToasts();
 
@@ -58,7 +61,7 @@ export default {
     const alwaysExpanded = this.el.dataset.expanded === "true";
     if (alwaysExpanded !== this.alwaysExpanded) {
       this.alwaysExpanded = alwaysExpanded;
-      this.expanded = alwaysExpanded;
+      this.expanded = alwaysExpanded || this.hovered;
     }
     const newAnimationDuration = parseInt(this.el.dataset.animationDuration) || 400;
     
