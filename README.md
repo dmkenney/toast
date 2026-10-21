@@ -112,6 +112,10 @@ def handle_event("notify", _params, socket) do
 end
 ```
 
+Notes on `put_toast` and navigation:
+- On `redirect/2` the flash travels in a cookie, which browsers drop above about 4KB. A large toast can push it over, and then no flash messages show on the next page.
+- From a LiveComponent, `put_toast` shows the toast right away but doesn't carry it across navigation. Call it in the parent LiveView for that.
+
 ### Flash Messages
 
 Toast continues to render your app's flash messages in the same style as toasts:

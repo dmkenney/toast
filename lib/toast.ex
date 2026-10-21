@@ -236,6 +236,13 @@ defmodule Toast do
   Accepts the same options as `send_toast/3`. Because the toast is stored in the
   flash, it is still shown after `push_navigate/2` or `redirect/2`, like `put_flash/3`.
 
+  On `redirect/2` the flash travels in a cookie, which browsers drop above about
+  4KB. A large toast can push it over that limit, and then no flash messages are
+  shown on the next page. Keep toasts small when redirecting.
+
+  Called from a LiveComponent, the toast is shown right away but is not carried
+  across navigation. Call `put_toast/4` in the parent LiveView for that.
+
   ## Examples
 
       socket
@@ -244,6 +251,18 @@ defmodule Toast do
       |> push_navigate(to: ~p"/profile")
   """
   def put_toast(socket, type, message, opts \\ []) do
+    # A LiveComponent's flash only reaches the LiveView when that callback
+    # navigates, and it is never cleared otherwise, so a toast kept there would
+    # come back on the component's next navigation. Send it right away instead.
+    if match?(%Phoenix.LiveComponent.CID{}, socket.assigns[:myself]) do
+      send_toast(type, message, opts)
+      socket
+    else
+      put_flash_toast(socket, type, message, opts)
+    end
+  end
+
+  defp put_flash_toast(socket, type, message, opts) do
     # Store a plain map so the flash can go through the session cookie on redirect.
     toast =
       type
@@ -255,13 +274,27 @@ defmodule Toast do
     # callback. The counter keeps their order.
     key = flash_prefix() <> Integer.to_string(System.unique_integer([:positive, :monotonic]))
 
-    # A LiveComponent's flash only reaches the LiveView when it navigates, so
-    # also send the toast to the group right away.
-    if match?(%Phoenix.LiveComponent.CID{}, socket.assigns[:myself]) do
-      send_toast(type, message, opts)
+    if Phoenix.LiveView.connected?(socket) do
+      socket
+      |> clear_dead_render_copy(toast)
+      |> Phoenix.LiveView.put_flash(key, toast)
+    else
+      Phoenix.LiveView.put_flash(socket, key, Map.put(toast, :dead_render, true))
     end
+  end
 
-    Phoenix.LiveView.put_flash(socket, key, toast)
+  # The flash from the dead render is handed to the connected mount, where a
+  # put_toast/4 in mount/3 runs again, so drop the dead render's copy.
+  defp clear_dead_render_copy(socket, toast) do
+    content = Map.delete(toast, :id)
+
+    socket.assigns.flash
+    |> Enum.filter(fn {key, value} ->
+      is_binary(key) and String.starts_with?(key, flash_prefix()) and
+        is_map(value) and value[:dead_render] == true and
+        Map.drop(value, [:id, :dead_render]) == content
+    end)
+    |> Enum.reduce(socket, fn {key, _}, socket -> Phoenix.LiveView.clear_flash(socket, key) end)
   end
 
   @doc """

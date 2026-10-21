@@ -66,9 +66,10 @@ defmodule Toast.NavigationTest do
       |> render_hook("toast_and_redirect", %{"message" => "Redirect toast"})
       |> follow_redirect(conn, "/target")
 
-    assert html_response(conn, 200) =~ "Redirect toast"
+    # The toast is added once the LiveView connects, not in the dead render.
+    refute html_response(conn, 200) =~ "Redirect toast"
     {:ok, target, _html} = live(conn)
-    assert render(target) =~ "Redirect toast"
+    assert target |> render() |> count("Redirect toast") == 1
   end
 
   test "put_toast without navigation shows the toast once", %{conn: conn} do
@@ -119,8 +120,10 @@ defmodule Toast.NavigationTest do
     assert view |> render() |> count("From component") == 1
   end
 
-  test "put_toast from a LiveComponent survives push_navigate", %{conn: conn} do
+  test "put_toast from a LiveComponent is not carried by a later navigation", %{conn: conn} do
     {:ok, view, _html} = live(conn, "/source")
+
+    view |> element("#component-toast") |> render_click()
 
     {:ok, target, _html} =
       view
@@ -128,7 +131,15 @@ defmodule Toast.NavigationTest do
       |> render_click()
       |> follow_redirect(conn, "/target")
 
-    assert render(target) =~ "Navigated from component"
+    refute render(target) =~ "From component"
+  end
+
+  test "put_toast in mount shows once", %{conn: conn} do
+    dead_html = conn |> get("/mount-toast") |> html_response(200)
+    refute dead_html =~ "Toast from mount"
+
+    {:ok, view, _html} = live(conn, "/mount-toast")
+    assert view |> render() |> count("Toast from mount") == 1
   end
 
   test "put_toast with a reused id shows the toast again", %{conn: conn} do
