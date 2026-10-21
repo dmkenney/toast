@@ -279,6 +279,23 @@ defmodule Toast.ComponentsTest do
     end
   end
 
+  describe "flash_group" do
+    test "renders flash messages and toasts from put_toast" do
+      assigns = %{
+        flash: %{
+          "info" => "Saved",
+          "__toast__:1" => %{id: "toast-1", type: :success, message: "From put_toast"}
+        }
+      }
+
+      html = render_component_to_string(~H"<Components.flash_group flash={@flash} />")
+
+      assert html =~ "Saved"
+      assert html =~ "From put_toast"
+      assert html =~ "toast-success"
+    end
+  end
+
   # Helper function to render a component to string
   defp render_component_to_string(template) do
     template

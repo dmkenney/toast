@@ -216,9 +216,11 @@ defmodule Toast.Components do
   attr(:rich_colors, :boolean, default: false)
 
   def flash_group(assigns) do
+    assigns = assign(assigns, :messages, Enum.map(assigns.flash, &flash_message/1))
+
     ~H"""
     <div class={["flash-messages", "flash-position-#{@position}"]} data-theme={@theme} data-rich-colors={to_string(@rich_colors)}>
-      <%= for {type, message} <- @flash do %>
+      <%= for {type, message} <- @messages do %>
         <div class={["toast", "toast-flash", "toast-#{flash_type_to_toast_type(type)}"]} 
              id={"flash-#{type}-#{System.unique_integer([:positive])}"}
              data-flash-key={type}
@@ -253,6 +255,10 @@ defmodule Toast.Components do
     </div>
     """
   end
+
+  # Toasts from Toast.put_toast/4 are stored in the flash as maps.
+  defp flash_message({_key, %{type: type, message: message}}), do: {type, message}
+  defp flash_message({type, message}), do: {type, message}
 
   defp flash_type_to_toast_type(:error), do: :error
   defp flash_type_to_toast_type("error"), do: :error
