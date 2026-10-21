@@ -38,43 +38,81 @@ end
 
 ## Setup
 
-1. Import the JavaScript hook in your `app.js`:
+These steps match a new Phoenix 1.8 app. Paths assume the default `assets/js/app.js` and `assets/css/app.css`.
+
+### 1. JavaScript
+
+In `assets/js/app.js`, import the hook and add it to your existing LiveSocket hooks. Keep the other options as they are:
 
 ```javascript
-// Note: The import path may vary depending on your project structure
-// For assets in the root directory:
-import Toast from "../deps/toast/assets/js/toast.js";
+import Toast from "../../deps/toast/assets/js/toast.js"
 
-// For assets in nested folders (e.g., assets/js/app.js):
-import Toast from "../../deps/toast/assets/js/toast.js";
-
-// Add to your LiveSocket hooks
-let liveSocket = new LiveSocket("/live", Socket, {
-  hooks: { Toast }
-});
+const liveSocket = new LiveSocket("/live", Socket, {
+  longPollFallbackMs: 2500,
+  params: {_csrf_token: csrfToken},
+  hooks: {...colocatedHooks, Toast},
+})
 ```
 
-2. Import the CSS in your `app.css`:
+On Phoenix 1.7 there is no `hooks` option yet, so add `hooks: {Toast}`.
+
+### 2. CSS
+
+In `assets/css/app.css`, import the stylesheet after the Tailwind import:
 
 ```css
-/* Note: The import path may vary depending on your project structure */
-/* For assets in the root directory: */
-@import "../deps/toast/assets/css/toast.css";
-
-/* For assets in nested folders (e.g., assets/css/app.css): */
+@import "tailwindcss" source(none);
 @import "../../deps/toast/assets/css/toast.css";
 ```
-If you are using Daisy UI, you should exclude the Toast component to avoid style conflicts
+
+If you use daisyUI (the Phoenix 1.8 default), its `toast` class clashes with Toast's. Add `exclude: toast;` to your existing daisyUI plugin block:
+
 ```css
-@plugin "../vendor/daisyui" {
-    exclude: toast;
+@plugin "daisyui/packages/bundle/daisyui" {
+  themes: false;
+  exclude: toast;
 }
 ```
 
-3. Add the toast container to your root layout (`root.html.heex`):
+### 3. Layout
+
+`Toast.toast_group` is a LiveComponent, so it must be rendered inside a LiveView. Do not put it in `root.html.heex`: the root layout is rendered outside the LiveView and every page fails with `cannot convert component Toast.LiveComponent ... to HTML`.
+
+**Phoenix 1.8:** in `lib/my_app_web/components/layouts.ex`, replace `<.flash_group flash={@flash} />` in `Layouts.app` with `Toast.toast_group`. Set `connection_toasts` to keep the "We can't find the internet" and "Something went wrong!" messages from Phoenix's `flash_group` (the `#client-error` and `#server-error` flashes):
+
+```elixir
+attr :flash, :map, required: true, doc: "the map of flash messages"
+attr :live, :boolean, default: true, doc: "set to false in controller templates"
+
+def app(assigns) do
+  ~H"""
+  <%!-- generated <header> and <main> stay as they are --%>
+
+  <Toast.toast_group :if={@live} flash={@flash} connection_toasts={true} />
+  <div :if={!@live} class="live-toast-group toast-position-bottom-right">
+    <Toast.Components.flash_group flash={@flash} />
+  </div>
+  """
+end
+```
+
+Controller templates that use `Layouts.app` are not LiveViews, so they pass `live={false}` and get a plain flash list in the same style:
 
 ```heex
-<Toast.toast_group flash={@flash} />
+<Layouts.app flash={@flash} live={false}>
+  ...
+</Layouts.app>
+```
+
+Without `live={false}`, a controller page that uses `Layouts.app` fails with the same error as above. On controller pages the flash close button does nothing, because the JavaScript hook only runs in a LiveView.
+
+**Phoenix 1.7:** `app.html.heex` is the layout for both LiveViews and controllers, and only LiveViews have `@socket`. Replace `<.flash_group flash={@flash} />` with:
+
+```heex
+<Toast.toast_group :if={assigns[:socket]} flash={@flash} connection_toasts={true} />
+<div :if={!assigns[:socket]} class="live-toast-group toast-position-bottom-right">
+  <Toast.Components.flash_group flash={@flash} />
+</div>
 ```
 
 ## Basic Usage
@@ -134,6 +172,8 @@ def create(conn, params) do
 end
 ```
 
+Flash messages don't auto-dismiss. They stay until the user closes them. Use `put_toast` or `send_toast` for messages that should go away on their own.
+
 ## Toast Types
 
 Toast comes with 6 built-in types, each with its own icon and color:
@@ -165,10 +205,11 @@ Configure the toast container with these attributes:
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
+| `id` | string | `"toast-group"` | DOM id of the toast list. Connection toasts use `"<id>-client-error"` and `"<id>-server-error"`. Render one toast group per page |
 | `position` | string | `"bottom-right"` | Position of toasts: `"top-left"`, `"top-center"`, `"top-right"`, `"bottom-left"`, `"bottom-center"`, `"bottom-right"` |
 | `theme` | string | `"light"` | Theme style: `"light"`, `"dark"`, or `"system"` (follows the OS light/dark setting via `prefers-color-scheme`) |
 | `rich_colors` | boolean | `false` | Use more vibrant colors for toast types |
-| `max_toasts` | integer | `3` | Maximum number of visible toasts |
+| `max_toasts` | integer | `3` | Maximum number of toasts shown. Older toasts beyond the limit are removed |
 | `animation_duration` | integer | `400` | Duration of animations in milliseconds |
 | `connection_toasts` | boolean | `false` | Show an error toast while the LiveView is disconnected |
 | `client_error_title` | string | `"We can't find the internet"` | Title when the client loses its connection |
@@ -180,8 +221,9 @@ Configure the toast container with these attributes:
 ### Connection Toasts
 
 Phoenix's generated layouts show `#client-error` and `#server-error` flashes when the
-LiveView loses its connection. Set `connection_toasts` to show these as toasts instead,
-then remove the two `<.flash>` elements from your layout:
+LiveView loses its connection. Set `connection_toasts` to show these as toasts instead.
+If you replaced `<.flash_group>` as shown in Setup, those flashes are already gone.
+Otherwise remove the two `<.flash>` elements from your layout:
 
 ```heex
 <Toast.toast_group flash={@flash} connection_toasts={true} />
@@ -203,7 +245,7 @@ show while disconnected and hide on reconnect. Pass your own text to translate t
 
 ### Individual Toast Options
 
-When sending toasts, you can configure:
+`send_toast` and `put_toast` take the same options:
 
 ```elixir
 Toast.send_toast(:success, "Message",
@@ -222,6 +264,7 @@ Toast.send_toast(:success, "Message",
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
+| `id` | string | random | Toast id. Set it to update or clear the toast later |
 | `title` | string | `nil` | Toast title (displayed above message) |
 | `description` | string | `nil` | Additional text (displayed below message) |
 | `duration` | integer | `6000` | Auto-dismiss time in milliseconds (0 = no auto-dismiss) |
@@ -241,6 +284,23 @@ action: %{
   params: %{key: "value"},   # Optional parameters
   inline: true               # Show as inline button (default: false)
 }
+```
+
+Clicking the button closes the toast and sends `{event, params}` to the LiveView that sent the toast. Handle it in `handle_info/2`. The event arrives as an atom and `params` has string keys:
+
+```elixir
+def handle_event("delete", %{"id" => id}, socket) do
+  Toast.send_toast(:info, "Item deleted",
+    action: %{label: "Undo", event: "undo_delete", params: %{id: id}}
+  )
+
+  {:noreply, socket}
+end
+
+def handle_info({:undo_delete, %{"id" => id}}, socket) do
+  # restore the item
+  {:noreply, socket}
+end
 ```
 
 ## Advanced Usage
@@ -282,8 +342,8 @@ Toast.send_toast(:info, "This is escaped: <script>",
 Update a toast after it's displayed:
 
 ```elixir
-# Create with custom ID
-Toast.send_toast(:loading, "Processing...", id: "upload-toast")
+# Create with custom ID. duration: 0 keeps it open until it is updated
+Toast.send_toast(:loading, "Processing...", id: "upload-toast", duration: 0)
 
 # Later, update it
 Toast.update_toast("upload-toast",
@@ -315,27 +375,23 @@ When multiple toasts are displayed:
 - Toasts stack with the newest on top
 - Hovering expands the stack to show all toasts
 - Set `expanded={true}` to turn off stacking and always show toasts expanded
-- Only `max_toasts` are visible (extras are queued)
+- At most `max_toasts` are shown. Older toasts beyond the limit are removed
 - Toasts animate smoothly when added/removed
 
 ## CSS Customization
 
-Toast uses CSS custom properties for easy theming:
+Each toast reads its colors from CSS custom properties: `--toast-bg`, `--toast-color`, `--toast-border` and `--toast-icon-color`. Override them per type in your `app.css`, after the Toast import:
 
 ```css
-.live-toast-group {
-  --toast-gap: 15px;
-  --toast-width: 350px;
-  --toast-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  --toast-animation-duration: 400ms;
-}
-
-/* Override specific toast types */
-.toast-success {
+.live-toast-group .toast-success {
   --toast-bg: #10b981;
   --toast-color: white;
+  --toast-border: #059669;
+  --toast-icon-color: white;
 }
 ```
+
+Set the animation speed with the `animation_duration` attribute, not CSS.
 
 ## Content Security Policy
 

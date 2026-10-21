@@ -21,36 +21,67 @@ defmodule Toast do
 
   ## Setup
 
-  1. Import the JavaScript hook in your `app.js`:
+  These steps match a new Phoenix 1.8 app with the default `assets/js/app.js`
+  and `assets/css/app.css`.
 
-      # Note: The import path may vary depending on your project structure
-      # For assets in the root directory:
-      import Toast from "../deps/toast/assets/js/toast.js";
-      
-      # For assets in nested folders (e.g., assets/js/app.js):
-      import Toast from "../../deps/toast/assets/js/toast.js";
+  ### JavaScript
 
-      let liveSocket = new LiveSocket("/live", Socket, {
-        hooks: { Toast }
-      });
+  In `assets/js/app.js`, import the hook and add it to your existing LiveSocket
+  hooks. Keep the other options as they are. On Phoenix 1.7, add `hooks: {Toast}`.
 
-  2. Import the CSS in your `app.css`:
+  ```javascript
+  import Toast from "../../deps/toast/assets/js/toast.js"
 
-      /* Note: The import path may vary depending on your project structure */
-      /* For assets in the root directory: */
-      @import "../deps/toast/assets/css/toast.css";
-      
-      /* For assets in nested folders (e.g., assets/css/app.css): */
-      @import "../../deps/toast/assets/css/toast.css";
+  const liveSocket = new LiveSocket("/live", Socket, {
+    longPollFallbackMs: 2500,
+    params: {_csrf_token: csrfToken},
+    hooks: {...colocatedHooks, Toast},
+  })
+  ```
 
-      /* If you are using DaisyUI, exclude their toast component to avoid conflicts: */
-      @plugin "../vendor/daisyui" {
-        exclude: toast;
-      }
+  ### CSS
 
-  3. Add the toast container to your root layout:
+  In `assets/css/app.css`, import the stylesheet after the Tailwind import. If you
+  use daisyUI, add `exclude: toast;` to your existing daisyUI plugin block, since
+  its `toast` class clashes with Toast's.
 
-      <Toast.toast_group flash={@flash} />
+  ```css
+  @import "tailwindcss" source(none);
+  @import "../../deps/toast/assets/css/toast.css";
+
+  @plugin "daisyui/packages/bundle/daisyui" {
+    themes: false;
+    exclude: toast;
+  }
+  ```
+
+  ### Layout
+
+  `toast_group/1` renders a LiveComponent, so it must be inside a LiveView. Don't
+  put it in `root.html.heex`: every page then fails with
+  `cannot convert component Toast.LiveComponent ... to HTML`.
+
+  On Phoenix 1.8, replace `<.flash_group flash={@flash} />` in `Layouts.app`
+  (`lib/my_app_web/components/layouts.ex`). Add a `live` attr so controller
+  templates, which aren't LiveViews, can render a plain flash list instead:
+
+  ```elixir
+  attr :live, :boolean, default: true, doc: "set to false in controller templates"
+  ```
+
+  ```heex
+  <Toast.toast_group :if={@live} flash={@flash} connection_toasts={true} />
+  <div :if={!@live} class="live-toast-group toast-position-bottom-right">
+    <Toast.Components.flash_group flash={@flash} />
+  </div>
+  ```
+
+  Controller templates then use `<Layouts.app flash={@flash} live={false}>`.
+  `connection_toasts` replaces the `#client-error` and `#server-error` flashes
+  from Phoenix's `flash_group`.
+
+  On Phoenix 1.7, put the same markup in `app.html.heex`, using
+  `assigns[:socket]` in place of `@live`, since only LiveViews have a socket.
 
   ## Basic Usage
 
@@ -81,17 +112,38 @@ defmodule Toast do
 
   ## Options
 
-  Configure individual toasts with:
+  `send_toast/3` and `put_toast/4` take the same options:
 
       Toast.send_toast(:success, "Message",
+        id: "my-toast",
         title: "Success!",
         description: "Additional details",
         duration: 10_000,
         action: %{
           label: "Undo",
-          event: "undo_action"
+          event: "undo_action",
+          params: %{id: 1}
         }
       )
+
+  * `:id` - Toast id, for `update_toast/2` and `clear_toast/1` (default: random)
+  * `:title` - Text above the message
+  * `:description` - Text below the message
+  * `:duration` - Auto-dismiss time in milliseconds. `0` keeps the toast open (default: 6000)
+  * `:close_button` - Show the close button (default: true)
+  * `:important` - Use `aria-live="assertive"` (default: false)
+  * `:icon` - Custom SVG icon HTML
+  * `:action` - Map with `:label`, `:event`, optional `:params` and `:inline`
+
+  Clicking an action button closes the toast and sends `{event, params}` to the
+  LiveView. The event is an atom and `params` has string keys:
+
+      def handle_info({:undo_action, %{"id" => id}}, socket) do
+        {:noreply, socket}
+      end
+
+  Flash messages from `put_flash/3` don't auto-dismiss. They stay until the user
+  closes them.
 
   ## HTML Content
 
@@ -340,6 +392,10 @@ defmodule Toast do
   Unknown fields are ignored, and an ID that isn't showing is a no-op.
 
   ## Examples
+
+      # duration: 0 keeps the loading toast open until it is updated
+      Toast.send_toast(:loading, "Uploading...", id: "upload", duration: 0)
+      Toast.update_toast("upload", type: :success, message: "Upload complete", duration: 3000)
 
       Toast.update_toast("toast-123", message: "Updated message", type: :success)
       Toast.update_toast("toast-123", title: "New Title", duration: 10_000)
