@@ -296,7 +296,8 @@ defmodule ToastDemoWeb.HomeLive do
               </button>
             </div>
             <p class="text-sm text-gray-500 mt-2">
-              Calls put_toast and then push_navigate to the gallery, where the toast shows
+              Like saving a form and redirecting: put_toast then push_navigate to the
+              gallery. The toast shows on the gallery page, bottom right.
             </p>
           </section>
 
@@ -670,7 +671,10 @@ defmodule ToastDemoWeb.HomeLive do
   def handle_event("toast_and_navigate", _params, socket) do
     {:noreply,
      socket
-     |> Toast.put_toast(:success, "This toast came from the demo page", title: "Navigated")
+     |> Toast.put_toast(:success, "Created on the demo page just before navigating here",
+       title: "Toast carried over",
+       duration: 8000
+     )
      |> push_navigate(to: ~p"/gallery")}
   end
 
