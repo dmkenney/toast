@@ -223,6 +223,14 @@ defmodule ToastDemoWeb.HomeLive do
               </button>
 
               <button
+                phx-click="change_theme"
+                phx-value-theme="system"
+                class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
+              >
+                System Theme
+              </button>
+
+              <button
                 phx-click="toggle_rich_colors"
                 class={"px-4 py-2 rounded-md transition-colors " <> if assigns[:rich_colors], do: "bg-purple-600 text-white hover:bg-purple-700", else: "bg-gray-200 text-gray-800 hover:bg-gray-300"}
               >
@@ -230,7 +238,65 @@ defmodule ToastDemoWeb.HomeLive do
               </button>
             </div>
             <p class="text-sm text-gray-500 mt-2">
-              Click to toggle between light and dark themes, or enable/disable rich colors
+              Click to toggle between light and dark themes, or enable/disable rich colors.
+              System follows the page theme, or your OS setting when the page sets none.
+            </p>
+          </section>
+
+          <%!-- Expanded --%>
+          <section>
+            <h2 class="text-2xl font-semibold mb-4">Expanded</h2>
+            <div class="flex gap-4">
+              <button
+                phx-click="toggle_expanded"
+                class={"px-4 py-2 rounded-md transition-colors " <> if assigns[:expanded], do: "bg-purple-600 text-white hover:bg-purple-700", else: "bg-gray-200 text-gray-800 hover:bg-gray-300"}
+              >
+                Always Expanded {if assigns[:expanded], do: "ON", else: "OFF"}
+              </button>
+            </div>
+            <p class="text-sm text-gray-500 mt-2">
+              Shows every toast in a list instead of a stack that expands on hover
+            </p>
+          </section>
+
+          <%!-- Connection Toasts --%>
+          <section>
+            <h2 class="text-2xl font-semibold mb-4">Connection Toasts</h2>
+            <div class="flex gap-4">
+              <button
+                phx-click={JS.dispatch("demo:drop-connection")}
+                class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
+              >
+                Drop Connection
+              </button>
+
+              <button
+                phx-click="crash"
+                class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+              >
+                Crash Server
+              </button>
+            </div>
+            <p class="text-sm text-gray-500 mt-2">
+              With connection_toasts on, a toast shows while LiveView is reconnecting.
+              Dropping the connection reconnects after 3 seconds. Crashing the server
+              restarts this LiveView, which resets the settings on this page.
+            </p>
+          </section>
+
+          <%!-- Navigation --%>
+          <section>
+            <h2 class="text-2xl font-semibold mb-4">Navigation</h2>
+            <div class="flex gap-4">
+              <button
+                phx-click="toast_and_navigate"
+                class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+              >
+                Navigate with a Toast
+              </button>
+            </div>
+            <p class="text-sm text-gray-500 mt-2">
+              Calls put_toast and then push_navigate to the gallery, where the toast shows
             </p>
           </section>
 
@@ -442,6 +508,7 @@ defmodule ToastDemoWeb.HomeLive do
        theme: "light",
        rich_colors: true,
        animation_duration: 400,
+       expanded: false,
        current_path: ~p"/"
      )}
   end
@@ -588,6 +655,25 @@ defmodule ToastDemoWeb.HomeLive do
     {:noreply, socket}
   end
 
+  def handle_event("toggle_expanded", _params, socket) do
+    expanded = !socket.assigns.expanded
+    status = if expanded, do: "on", else: "off"
+    Toast.send_toast(:info, "Always expanded #{status}")
+
+    {:noreply, assign(socket, expanded: expanded)}
+  end
+
+  def handle_event("crash", _params, _socket) do
+    raise "Crash requested from the demo"
+  end
+
+  def handle_event("toast_and_navigate", _params, socket) do
+    {:noreply,
+     socket
+     |> Toast.put_toast(:success, "This toast came from the demo page", title: "Navigated")
+     |> push_navigate(to: ~p"/gallery")}
+  end
+
   def handle_event("change_animation_speed", %{"duration" => duration}, socket) do
     duration = String.to_integer(duration)
     socket = assign(socket, animation_duration: duration)
@@ -665,21 +751,18 @@ defmodule ToastDemoWeb.HomeLive do
   end
 
   def handle_info({:update_toast_test, toast_id, 1}, socket) do
-    # First update: change message and type
-    Toast.send_toast(:info, "Updated message!",
-      id: toast_id,
-      title: "Updated Title"
-    )
+    # First update: change the message and title
+    Toast.update_toast(toast_id, message: "Updated message!", title: "Updated Title")
 
     {:noreply, socket}
   end
 
   def handle_info({:update_toast_test, toast_id, 2}, socket) do
-    # Second update: change to success with different message
-    Toast.send_toast(:success, "Final update - Success!",
-      id: toast_id,
-      title: "Complete",
-      duration: 5_000
+    # Second update: change the type and message
+    Toast.update_toast(toast_id,
+      type: :success,
+      message: "Final update - Success!",
+      title: "Complete"
     )
 
     {:noreply, socket}
