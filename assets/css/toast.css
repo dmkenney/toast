@@ -19,6 +19,12 @@
   position: relative;
 }
 
+/* Theme frameworks such as daisyUI paint a background on any [data-theme]
+   element. Toast's containers carry data-theme only to pick toast colors. */
+:where(.live-toast-group) [data-theme] {
+  background-color: transparent;
+}
+
 /* Position classes */
 :where(.live-toast-group).toast-position-top-left {
   top: 16px;
@@ -350,28 +356,28 @@
 }
 
 /* Dark mode with rich colors */
-:where(.live-toast-group) > [data-theme]:where([data-theme='dark'], [data-theme='system']:is([data-theme='dark'] *, .dark *))[data-rich-colors='true'] .toast-success {
+:where(.live-toast-group) > [data-theme]:where([data-theme='dark'], [data-theme='system']:is([data-theme='dark'] *, .dark *)):where([data-rich-colors='true']) .toast-success {
   --toast-bg: hsl(150, 100%, 6%);
   --toast-color: hsl(150, 86%, 65%);
   --toast-border: hsl(147, 100%, 12%);
   --toast-icon-color: hsl(150, 86%, 65%);
 }
 
-:where(.live-toast-group) > [data-theme]:where([data-theme='dark'], [data-theme='system']:is([data-theme='dark'] *, .dark *))[data-rich-colors='true'] .toast-error {
+:where(.live-toast-group) > [data-theme]:where([data-theme='dark'], [data-theme='system']:is([data-theme='dark'] *, .dark *)):where([data-rich-colors='true']) .toast-error {
   --toast-bg: hsl(358, 76%, 10%);
   --toast-color: hsl(358, 100%, 81%);
   --toast-border: hsl(357, 89%, 16%);
   --toast-icon-color: hsl(358, 100%, 81%);
 }
 
-:where(.live-toast-group) > [data-theme]:where([data-theme='dark'], [data-theme='system']:is([data-theme='dark'] *, .dark *))[data-rich-colors='true'] .toast-warning {
+:where(.live-toast-group) > [data-theme]:where([data-theme='dark'], [data-theme='system']:is([data-theme='dark'] *, .dark *)):where([data-rich-colors='true']) .toast-warning {
   --toast-bg: hsl(64, 100%, 6%);
   --toast-color: hsl(46, 87%, 65%);
   --toast-border: hsl(60, 100%, 9%);
   --toast-icon-color: hsl(46, 87%, 65%);
 }
 
-:where(.live-toast-group) > [data-theme]:where([data-theme='dark'], [data-theme='system']:is([data-theme='dark'] *, .dark *))[data-rich-colors='true'] .toast-info {
+:where(.live-toast-group) > [data-theme]:where([data-theme='dark'], [data-theme='system']:is([data-theme='dark'] *, .dark *)):where([data-rich-colors='true']) .toast-info {
   --toast-bg: hsl(215, 100%, 6%);
   --toast-color: hsl(216, 87%, 65%);
   --toast-border: hsl(223, 43%, 17%);
@@ -628,28 +634,28 @@
     --toast-border: hsl(0, 0%, 25%);
   }
 
-  :where(.live-toast-group) > [data-theme]:where([data-theme='system']:not([data-theme='light'] *))[data-rich-colors='true'] .toast-success {
+  :where(.live-toast-group) > [data-theme]:where([data-theme='system']:not([data-theme='light'] *)):where([data-rich-colors='true']) .toast-success {
     --toast-bg: hsl(150, 100%, 6%);
     --toast-color: hsl(150, 86%, 65%);
     --toast-border: hsl(147, 100%, 12%);
     --toast-icon-color: hsl(150, 86%, 65%);
   }
 
-  :where(.live-toast-group) > [data-theme]:where([data-theme='system']:not([data-theme='light'] *))[data-rich-colors='true'] .toast-error {
+  :where(.live-toast-group) > [data-theme]:where([data-theme='system']:not([data-theme='light'] *)):where([data-rich-colors='true']) .toast-error {
     --toast-bg: hsl(358, 76%, 10%);
     --toast-color: hsl(358, 100%, 81%);
     --toast-border: hsl(357, 89%, 16%);
     --toast-icon-color: hsl(358, 100%, 81%);
   }
 
-  :where(.live-toast-group) > [data-theme]:where([data-theme='system']:not([data-theme='light'] *))[data-rich-colors='true'] .toast-warning {
+  :where(.live-toast-group) > [data-theme]:where([data-theme='system']:not([data-theme='light'] *)):where([data-rich-colors='true']) .toast-warning {
     --toast-bg: hsl(64, 100%, 6%);
     --toast-color: hsl(46, 87%, 65%);
     --toast-border: hsl(60, 100%, 9%);
     --toast-icon-color: hsl(46, 87%, 65%);
   }
 
-  :where(.live-toast-group) > [data-theme]:where([data-theme='system']:not([data-theme='light'] *))[data-rich-colors='true'] .toast-info {
+  :where(.live-toast-group) > [data-theme]:where([data-theme='system']:not([data-theme='light'] *)):where([data-rich-colors='true']) .toast-info {
     --toast-bg: hsl(215, 100%, 6%);
     --toast-color: hsl(216, 87%, 65%);
     --toast-border: hsl(223, 43%, 17%);
@@ -749,14 +755,14 @@
 :where(.live-toast-group) .toast-flash {
   position: relative !important;
   margin-bottom: 8px;
-  animation: slide-in-from-top 0.3s ease-out;
+  animation: slide-in-from-top var(--toast-animation-duration) ease-out;
 }
 
 /* Animation based on position */
 :where(.live-toast-group).toast-position-bottom-left .toast-flash,
 :where(.live-toast-group).toast-position-bottom-center .toast-flash,
 :where(.live-toast-group).toast-position-bottom-right .toast-flash {
-  animation: slide-in-from-bottom 0.3s ease-out;
+  animation: slide-in-from-bottom var(--toast-animation-duration) ease-out;
 }
 
 /* Last flash message shouldn't have margin */
