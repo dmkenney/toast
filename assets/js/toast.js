@@ -173,6 +173,9 @@ export default {
 
     // Get actual height first, then update positions
     requestAnimationFrame(() => {
+      // update_toast may have replaced the element before this frame ran
+      const toastEl = toastInfo.element;
+
       // Measure actual height before any transforms/scaling are applied
       // We need to temporarily reset transforms to get the natural height
       const originalTransform = toastEl.style.transform;
@@ -195,10 +198,14 @@ export default {
       }, 10);
 
       // Set up auto-removal timer
-      if (duration > 0 && (this.maxToasts === null || index < this.maxToasts)) {
+      if (toastInfo.timer) {
+        clearTimeout(toastInfo.timer);
+        toastInfo.timer = null;
+      }
+      if (toastInfo.duration > 0 && (this.maxToasts === null || index < this.maxToasts)) {
         toastInfo.timer = setTimeout(() => {
           this.removeToastFromServer(toastId);
-        }, duration);
+        }, toastInfo.duration);
       }
     });
 
