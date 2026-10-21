@@ -685,6 +685,11 @@
   display: none;
 }
 
+/* Only one shows at a time, so drop the margin flash toasts use between them */
+.toast-connection-group .toast-flash {
+  margin-bottom: 0;
+}
+
 .toast-connection .toast-icon svg {
   animation: spin 1s linear infinite;
 }
