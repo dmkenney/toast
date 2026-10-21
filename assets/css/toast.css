@@ -742,7 +742,6 @@
 :where(.live-toast-group) .flash-messages {
   position: relative;
   z-index: 50;
-  pointer-events: auto;
   width: 100%;
 }
 
