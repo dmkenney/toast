@@ -67,7 +67,8 @@ defmodule Toast.LiveComponent do
         ])
       )
 
-    # Only update flash messages if flash is explicitly provided in assigns
+    # Only update flash messages if flash is explicitly provided in assigns.
+    # send_update calls, such as send_toast/3, don't pass it.
     socket =
       if Map.has_key?(assigns, :flash) do
         {toasts, flash} = Enum.split_with(assigns.flash, fn {key, _} -> flash_toast?(key) end)
@@ -298,21 +299,10 @@ defmodule Toast.LiveComponent do
     assign(socket, :flash_toast_keys, MapSet.new(toasts, fn {key, _} -> key end))
   end
 
-  defp update_flash_messages(socket, new_flash) do
-    current = socket.assigns.flash_messages
-
-    # Filter out empty values from new flash
-    new_flash = for {k, v} <- new_flash, v != nil and v != "", into: %{}, do: {k, v}
-
-    # Only update if there are actual new flash messages
-    # Don't clear existing messages just because new_flash is empty
-    if map_size(new_flash) > 0 do
-      # Merge new flash messages with current ones
-      updated = Map.merge(current, new_flash)
-      assign(socket, :flash_messages, updated)
-    else
-      # Keep current flash messages if no new ones
-      socket
-    end
+  # Show what is in the LiveView's flash now, so a key removed with
+  # clear_flash/1,2 disappears like it does with Phoenix's own flash group.
+  defp update_flash_messages(socket, flash) do
+    flash = for {k, v} <- flash, v != nil and v != "", into: %{}, do: {k, v}
+    assign(socket, :flash_messages, flash)
   end
 end

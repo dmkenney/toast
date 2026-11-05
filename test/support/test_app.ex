@@ -232,6 +232,23 @@ defmodule Toast.TestApp do
     def handle_event("flash", %{"type" => type, "message" => message}, socket) do
       {:noreply, put_flash(socket, type, message)}
     end
+
+    def handle_event("clear_flash", %{"type" => type}, socket) do
+      {:noreply, clear_flash(socket, type)}
+    end
+
+    def handle_event("clear_flash", _params, socket) do
+      {:noreply, clear_flash(socket)}
+    end
+
+    def handle_event("toast", %{"message" => message}, socket) do
+      Toast.send_toast(:info, message)
+      {:noreply, socket}
+    end
+
+    def handle_event("put_toast", %{"message" => message}, socket) do
+      {:noreply, Toast.put_toast(socket, :success, message)}
+    end
   end
 
   defmodule SystemThemeLive do

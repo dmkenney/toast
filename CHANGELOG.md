@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - On LiveView 1.1+, `update_toast` patches the toast in place instead of replacing its element, so screen readers only read out the text that changed
 
+### Fixed
+- `clear_flash` on the server removes the flash from the toast group. Shown flash messages now match the LiveView's current flash
+
 ## [0.3.1] - 2026-10-21
 
 ### Fixed
