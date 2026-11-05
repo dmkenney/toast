@@ -343,6 +343,30 @@ defmodule ToastDemoWeb.HomeLive do
             </p>
           </section>
 
+          <%!-- Progress --%>
+          <section>
+            <h2 class="text-2xl font-semibold mb-4">Progress</h2>
+            <div class="flex gap-4">
+              <button
+                phx-click="start_export"
+                class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+              >
+                Start Export
+              </button>
+
+              <button
+                phx-click="show_indeterminate"
+                class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+              >
+                Indeterminate
+              </button>
+            </div>
+            <p class="text-sm text-gray-500 mt-2">
+              Updates the progress bar in place with <code>update_toast</code>. Close
+              the toast while it runs and <code>on_dismiss</code> tells the LiveView.
+            </p>
+          </section>
+
           <%!-- Custom Duration --%>
           <section>
             <h2 class="text-2xl font-semibold mb-4">Custom Duration</h2>
@@ -703,6 +727,26 @@ defmodule ToastDemoWeb.HomeLive do
     {:noreply, socket}
   end
 
+  def handle_event("start_export", _params, socket) do
+    id = "export-#{System.unique_integer([:positive])}"
+
+    Toast.send_toast(:loading, "Exporting report...",
+      id: id,
+      duration: 0,
+      progress: 0,
+      description: "0 of 10,000 rows",
+      on_dismiss: %{event: :export_toast_closed, params: %{id: id}}
+    )
+
+    Process.send_after(self(), {:export_progress, id, 10}, 500)
+    {:noreply, socket}
+  end
+
+  def handle_event("show_indeterminate", _params, socket) do
+    Toast.send_toast(:loading, "Preparing export...", progress: :indeterminate)
+    {:noreply, socket}
+  end
+
   def handle_event("test_update", _params, socket) do
     toast_id = "update-test-#{System.unique_integer([:positive])}"
 
@@ -734,6 +778,42 @@ defmodule ToastDemoWeb.HomeLive do
     Toast.send_toast(:info, "Action undone!")
     {:noreply, socket}
   end
+
+  def handle_info({:export_progress, id, 100}, socket) do
+    Toast.update_toast(id,
+      type: :success,
+      message: "Report is ready",
+      description: nil,
+      progress: nil,
+      duration: 6000,
+      action: %{label: "Download", event: :export_downloaded}
+    )
+
+    {:noreply, socket}
+  end
+
+  def handle_info({:export_progress, id, percent}, socket) do
+    Toast.update_toast(id,
+      progress: percent,
+      description: "#{percent * 100} of 10,000 rows"
+    )
+
+    Process.send_after(self(), {:export_progress, id, percent + 10}, 500)
+    {:noreply, socket}
+  end
+
+  def handle_info({:export_downloaded, _params}, socket) do
+    Toast.send_toast(:info, "Download started")
+    {:noreply, socket}
+  end
+
+  # A real app would stop showing the toast for this export
+  def handle_info({:export_toast_closed, %{"reason" => "closed"}}, socket) do
+    Toast.send_toast(:info, "Export keeps running in the background")
+    {:noreply, socket}
+  end
+
+  def handle_info({:export_toast_closed, _params}, socket), do: {:noreply, socket}
 
   def handle_info({:async_result, id, "success"}, socket) do
     # Clear the loading toast
