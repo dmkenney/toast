@@ -28,6 +28,20 @@ defmodule Toast.TestApp do
       """
     end
 
+    def flash_keys(assigns) do
+      ~H"""
+      <Toast.toast_group flash={@flash} flash_keys={[:info, "error"]} />
+      <%= @inner_content %>
+      """
+    end
+
+    def flash_durations(assigns) do
+      ~H"""
+      <Toast.toast_group flash={@flash} flash_durations={%{:info => 6000, "warning" => 3000}} />
+      <%= @inner_content %>
+      """
+    end
+
     def system_theme(assigns) do
       ~H"""
       <Toast.toast_group flash={@flash} theme="system" rich_colors={true} />
@@ -209,6 +223,42 @@ defmodule Toast.TestApp do
     end
   end
 
+  defmodule FlashDurationsLive do
+    use Phoenix.LiveView
+
+    def mount(_params, _session, socket) do
+      layout = if socket.assigns.live_action == :keys, do: :flash_keys, else: :flash_durations
+      {:ok, socket, layout: {Layouts, layout}}
+    end
+
+    def render(assigns) do
+      ~H"""
+      <h1>Flash durations</h1>
+      """
+    end
+
+    def handle_event("flash", %{"type" => type, "message" => message}, socket) do
+      {:noreply, put_flash(socket, type, message)}
+    end
+
+    def handle_event("clear_flash", %{"type" => type}, socket) do
+      {:noreply, clear_flash(socket, type)}
+    end
+
+    def handle_event("clear_flash", _params, socket) do
+      {:noreply, clear_flash(socket)}
+    end
+
+    def handle_event("toast", %{"message" => message}, socket) do
+      Toast.send_toast(:info, message)
+      {:noreply, socket}
+    end
+
+    def handle_event("put_toast", %{"message" => message}, socket) do
+      {:noreply, Toast.put_toast(socket, :success, message)}
+    end
+  end
+
   defmodule SystemThemeLive do
     use Phoenix.LiveView
 
@@ -324,6 +374,8 @@ defmodule Toast.TestApp do
       live("/mount-toast", MountToastLive)
       live("/custom-id", CustomIdLive)
       live("/limit", LimitLive)
+      live("/flash-durations", FlashDurationsLive)
+      live("/flash-keys", FlashDurationsLive, :keys)
     end
   end
 

@@ -62,11 +62,14 @@ defmodule Toast.LiveComponent do
           :client_error_message,
           :server_error_title,
           :server_error_message,
-          :expanded
+          :expanded,
+          :flash_durations,
+          :flash_keys
         ])
       )
 
-    # Only update flash messages if flash is explicitly provided in assigns
+    # Only update flash messages if flash is explicitly provided in assigns.
+    # send_update calls, such as send_toast/3, don't pass it.
     socket =
       if Map.has_key?(assigns, :flash) do
         {toasts, flash} = Enum.split_with(assigns.flash, fn {key, _} -> flash_toast?(key) end)
@@ -112,7 +115,7 @@ defmodule Toast.LiveComponent do
     ~H"""
     <div class={"live-toast-group toast-position-#{@computed_position}"}>
       <Toast.Components.connection_group :if={@is_top_position && assigns[:connection_toasts]} id={assigns[:dom_id] || "toast-group"} theme={assigns[:theme] || "light"} rich_colors={assigns[:rich_colors] || false} client_error_title={@client_error_title} client_error_message={@client_error_message} server_error_title={@server_error_title} server_error_message={@server_error_message} />
-      <Toast.Components.flash_group :if={@is_top_position && map_size(@flash_messages) > 0} flash={@flash_messages} position={@computed_position} theme={assigns[:theme] || "light"} rich_colors={assigns[:rich_colors] || false} />
+      <Toast.Components.flash_group :if={@is_top_position && map_size(@flash_messages) > 0} flash={@flash_messages} position={@computed_position} theme={assigns[:theme] || "light"} rich_colors={assigns[:rich_colors] || false} durations={assigns[:flash_durations] || %{}} keys={assigns[:flash_keys]} />
       <div 
         id={assigns[:dom_id] || "toast-group"}
         class="live-toast-stream"
@@ -128,7 +131,7 @@ defmodule Toast.LiveComponent do
           <Components.toast toast={toast} />
         </div>
       </div>
-      <Toast.Components.flash_group :if={!@is_top_position && map_size(@flash_messages) > 0} flash={@flash_messages} position={@computed_position} theme={assigns[:theme] || "light"} rich_colors={assigns[:rich_colors] || false} />
+      <Toast.Components.flash_group :if={!@is_top_position && map_size(@flash_messages) > 0} flash={@flash_messages} position={@computed_position} theme={assigns[:theme] || "light"} rich_colors={assigns[:rich_colors] || false} durations={assigns[:flash_durations] || %{}} keys={assigns[:flash_keys]} />
       <Toast.Components.connection_group :if={!@is_top_position && assigns[:connection_toasts]} id={assigns[:dom_id] || "toast-group"} theme={assigns[:theme] || "light"} rich_colors={assigns[:rich_colors] || false} client_error_title={@client_error_title} client_error_message={@client_error_message} server_error_title={@server_error_title} server_error_message={@server_error_message} />
     </div>
     """
@@ -297,21 +300,10 @@ defmodule Toast.LiveComponent do
     assign(socket, :flash_toast_keys, MapSet.new(toasts, fn {key, _} -> key end))
   end
 
-  defp update_flash_messages(socket, new_flash) do
-    current = socket.assigns.flash_messages
-
-    # Filter out empty values from new flash
-    new_flash = for {k, v} <- new_flash, v != nil and v != "", into: %{}, do: {k, v}
-
-    # Only update if there are actual new flash messages
-    # Don't clear existing messages just because new_flash is empty
-    if map_size(new_flash) > 0 do
-      # Merge new flash messages with current ones
-      updated = Map.merge(current, new_flash)
-      assign(socket, :flash_messages, updated)
-    else
-      # Keep current flash messages if no new ones
-      socket
-    end
+  # Show what is in the LiveView's flash now, so a key removed with
+  # clear_flash/1,2 disappears like it does with Phoenix's own flash group.
+  defp update_flash_messages(socket, flash) do
+    flash = for {k, v} <- flash, v != nil and v != "", into: %{}, do: {k, v}
+    assign(socket, :flash_messages, flash)
   end
 end
