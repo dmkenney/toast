@@ -184,8 +184,8 @@ defmodule Toast do
         {:noreply, assign(socket, :hidden_export_toast, id)}
       end
 
-  Flash messages from `put_flash/3` don't auto-dismiss. They stay until the user
-  closes them.
+  Flash messages from `put_flash/3` stay until the user closes them, unless
+  `toast_group/1` sets `flash_durations` for their type.
 
   ## HTML Content
 
@@ -263,6 +263,8 @@ defmodule Toast do
 
       <Toast.toast_group flash={@flash} expanded={true} />
 
+      <Toast.toast_group flash={@flash} flash_durations={%{info: 6000, success: 6000}} />
+
   ## Attributes
 
   * `:id` - DOM id of the toast list. The connection toasts use `"<id>-client-error"` and
@@ -282,6 +284,10 @@ defmodule Toast do
   * `:server_error_message` - Message shown when the server crashes (default: "Hang in there while we get back on track")
   * `:expanded` - Always show toasts expanded instead of stacked. When `false`, toasts
     stack and expand on hover (default: false)
+  * `:flash_durations` - Auto-dismiss time in milliseconds for `put_flash/3` messages,
+    by flash type, such as `%{info: 6000}`. Types not listed stay until closed. Like
+    toasts, they pause while the pointer is over the group (default: `%{}`, none
+    auto-dismiss)
 
   To translate the connection toasts, pass gettext strings:
 
@@ -305,6 +311,7 @@ defmodule Toast do
   attr(:server_error_title, :string, default: "Something went wrong!")
   attr(:server_error_message, :string, default: "Hang in there while we get back on track")
   attr(:expanded, :boolean, default: false)
+  attr(:flash_durations, :map, default: %{})
 
   def toast_group(assigns) do
     ~H"""
@@ -324,6 +331,7 @@ defmodule Toast do
         server_error_title={@server_error_title}
         server_error_message={@server_error_message}
         expanded={@expanded}
+        flash_durations={@flash_durations}
       />
     """
   end

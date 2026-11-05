@@ -28,6 +28,13 @@ defmodule Toast.TestApp do
       """
     end
 
+    def flash_durations(assigns) do
+      ~H"""
+      <Toast.toast_group flash={@flash} flash_durations={%{:info => 6000, "warning" => 3000}} />
+      <%= @inner_content %>
+      """
+    end
+
     def system_theme(assigns) do
       ~H"""
       <Toast.toast_group flash={@flash} theme="system" rich_colors={true} />
@@ -209,6 +216,24 @@ defmodule Toast.TestApp do
     end
   end
 
+  defmodule FlashDurationsLive do
+    use Phoenix.LiveView
+
+    def mount(_params, _session, socket) do
+      {:ok, socket, layout: {Layouts, :flash_durations}}
+    end
+
+    def render(assigns) do
+      ~H"""
+      <h1>Flash durations</h1>
+      """
+    end
+
+    def handle_event("flash", %{"type" => type, "message" => message}, socket) do
+      {:noreply, put_flash(socket, type, message)}
+    end
+  end
+
   defmodule SystemThemeLive do
     use Phoenix.LiveView
 
@@ -324,6 +349,7 @@ defmodule Toast.TestApp do
       live("/mount-toast", MountToastLive)
       live("/custom-id", CustomIdLive)
       live("/limit", LimitLive)
+      live("/flash-durations", FlashDurationsLive)
     end
   end
 

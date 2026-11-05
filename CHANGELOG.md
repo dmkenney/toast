@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.4.0] - 2026-11-05
 
 ### Added
+- `flash_durations` option on `toast_group`: auto-dismiss `put_flash` messages by type, such as `%{info: 6000}`. Timers pause on hover, and a dismissed flash is cleared on the server like a closed one. Default `%{}` keeps flash messages open until closed
 - `progress` option: a progress bar from 0 to 100, or `:indeterminate`. Works with `update_toast`, and `progress: nil` removes it
 - `on_dismiss` option: sends `{event, params}` to the LiveView when the toast is closed in the browser, with a `"reason"` of `"closed"`, `"timeout"` or `"action"`
 
