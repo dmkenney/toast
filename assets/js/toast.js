@@ -122,10 +122,14 @@ export default {
         const toastEl = el.querySelector('.toast:not(.toast-flash)');
         const toastInfo = this.toasts.get(el.id);
         if (toastEl && toastEl !== toastInfo.element) {
-          // The toast was re-rendered by update_toast
+          // update_toast replaced the toast element (LiveView before 1.1)
           this.refreshToast(el.id, toastEl, toastInfo, index);
-        } else if (toastEl && toastEl.getAttribute('data-mounted') !== 'true') {
-          toastEl.setAttribute('data-mounted', 'true');
+        } else if (toastEl) {
+          if (toastEl.getAttribute('data-mounted') !== 'true') {
+            toastEl.setAttribute('data-mounted', 'true');
+          }
+          // update_toast patched the toast in place (LiveView 1.1+)
+          this.syncPatchedToast(toastInfo);
         }
       }
     });
@@ -159,6 +163,8 @@ export default {
     };
 
     this.toasts.set(el.id, toastInfo);
+    this.keepHookAttributes(toastEl);
+    toastInfo.content = this.toastContent(toastEl);
 
     // Get current toast count for initial positioning
     const toastElements = Array.from(this.el.querySelectorAll('[id^="toasts-"]'));
@@ -240,20 +246,75 @@ export default {
       toastEl.style.transition = `all ${this.animationDuration}ms cubic-bezier(0.21, 1.02, 0.73, 1)`;
     }, 10);
 
-    // Restart the timer if the duration changed
-    const duration = parseInt(toastEl.dataset.duration || "6000");
-    if (duration !== toastInfo.duration) {
-      toastInfo.duration = duration;
-      toastInfo.remaining = duration;
-      if (toastInfo.timer) {
-        clearTimeout(toastInfo.timer);
-        toastInfo.timer = null;
-      }
-      this.startTimer(toastInfo);
-    }
-
+    this.keepHookAttributes(toastEl);
+    toastInfo.content = this.toastContent(toastEl);
+    this.syncDuration(toastInfo);
     this.setupToastInteractions(domId, toastEl, toastInfo);
     this.updateToasts();
+  },
+
+  // LiveView 1.1+ patches a toast in place when the server renders it with a
+  // stable id. Keep the attributes set here, which the patch would otherwise
+  // drop. Older versions replace the element, handled by refreshToast.
+  keepHookAttributes(toastEl) {
+    const js = typeof this.js === "function" ? this.js() : null;
+    if (js && typeof js.ignoreAttributes === "function") {
+      js.ignoreAttributes(toastEl, ["style", "data-mounted", "data-front", "data-expanded", "data-removed"]);
+    }
+  },
+
+  // What the server rendered, to tell whether a patch changed the toast
+  toastContent(toastEl) {
+    return `${toastEl.className}|${toastEl.dataset.duration}|${toastEl.innerHTML}`;
+  },
+
+  // After an in-place patch, fit the height to the new content and restart the
+  // timer if the duration changed. Nothing else changes, so the toast doesn't
+  // animate in again and a toast with duration 0 keeps no timer.
+  syncPatchedToast(toastInfo) {
+    const toastEl = toastInfo.element;
+    const content = this.toastContent(toastEl);
+    if (content === toastInfo.content || toastInfo.removed) return;
+    toastInfo.content = content;
+
+    this.measureHeight(toastInfo);
+    this.syncDuration(toastInfo);
+    this.updateToasts();
+  },
+
+  // Measure the toast's natural height. Stacked toasts are clamped to the front
+  // toast's height while mounted, so measure it unmounted, without transitions,
+  // and put everything back before the next paint.
+  measureHeight(toastInfo) {
+    const toastEl = toastInfo.element;
+    const { transition, transform } = toastEl.style;
+    const mounted = toastEl.getAttribute('data-mounted');
+
+    toastEl.style.transition = "none";
+    toastEl.style.transform = "none";
+    toastEl.style.height = "";
+    toastEl.removeAttribute('data-mounted');
+    toastInfo.height = toastEl.getBoundingClientRect().height;
+
+    toastEl.style.height = toastInfo.height + 'px';
+    toastEl.style.transform = transform;
+    if (mounted !== null) toastEl.setAttribute('data-mounted', mounted);
+    toastEl.getBoundingClientRect();
+    toastEl.style.transition = transition;
+  },
+
+  // Restart the timer if the server changed the toast's duration
+  syncDuration(toastInfo) {
+    const duration = parseInt(toastInfo.element.dataset.duration || "6000");
+    if (duration === toastInfo.duration) return;
+
+    toastInfo.duration = duration;
+    toastInfo.remaining = duration;
+    if (toastInfo.timer) {
+      clearTimeout(toastInfo.timer);
+      toastInfo.timer = null;
+    }
+    this.startTimer(toastInfo);
   },
 
   updateToasts() {
@@ -316,7 +377,7 @@ export default {
     }
     toastInfo.startedAt = Date.now();
     toastInfo.timer = setTimeout(() => {
-      this.removeToastFromServer(toastInfo);
+      this.removeToastFromServer(toastInfo, "timeout");
     }, toastInfo.remaining);
   },
 
@@ -327,35 +388,32 @@ export default {
     toastInfo.remaining -= Date.now() - toastInfo.startedAt;
   },
 
-  setupToastInteractions(domId, toastEl, toastInfo) {
-    // Handle close button
-    const closeBtn = toastEl.querySelector('[data-close-toast]');
-    if (closeBtn) {
-      closeBtn.addEventListener('click', (e) => {
+  // One delegated listener per toast element. A toast patched in place keeps
+  // its element, and update_toast can add a button that wasn't there before.
+  setupToastInteractions(domId, toastEl) {
+    if (toastEl.__toastListening) return;
+    toastEl.__toastListening = true;
+
+    toastEl.addEventListener('click', (e) => {
+      const toastInfo = this.toasts.get(toastEl.parentElement && toastEl.parentElement.id);
+      if (!toastInfo || toastInfo.element !== toastEl) return;
+
+      const closeBtn = e.target.closest('[data-close-toast]');
+      if (closeBtn && toastEl.contains(closeBtn)) {
         e.preventDefault();
         e.stopPropagation();
-
-        // Clear any active timer
-        if (toastInfo.timer) {
-          clearTimeout(toastInfo.timer);
-          toastInfo.timer = null;
-        }
-
         this.removeToastFromServer(toastInfo);
-      });
-    }
+        return;
+      }
 
-    // Handle action button
-    const actionBtn = toastEl.querySelector('[data-toast-action]');
-    if (actionBtn) {
-      actionBtn.addEventListener('click', () => {
-        const toastId = toastEl.dataset.toastId;
+      const actionBtn = e.target.closest('[data-toast-action]');
+      if (actionBtn && toastEl.contains(actionBtn)) {
         this.pushFrom(actionBtn, "action", {
-          toast_id: toastId,
+          toast_id: toastEl.dataset.toastId,
           action: actionBtn.dataset.toastAction
         });
-      });
-    }
+      }
+    });
   },
 
   removeToast(domId) {
@@ -396,7 +454,8 @@ export default {
 
   // Ask the server to remove the toast from the stream. Hide it right away, so
   // closing it still works while disconnected.
-  removeToastFromServer(toastInfo) {
+  // reason is "closed" or "timeout", sent on to the toast's on_dismiss event.
+  removeToastFromServer(toastInfo, reason = "closed") {
     if (toastInfo.timer) {
       clearTimeout(toastInfo.timer);
       toastInfo.timer = null;
@@ -405,7 +464,7 @@ export default {
     toastInfo.element.setAttribute('data-removed', 'true');
     toastInfo.element.style.opacity = "0";
     toastInfo.element.style.pointerEvents = "none";
-    this.pushFrom(toastInfo.element, "clear", { id: toastInfo.toastId });
+    this.pushFrom(toastInfo.element, "clear", { id: toastInfo.toastId, reason });
   },
 
   // Push a toast's event with a JS command, which locks only el until the

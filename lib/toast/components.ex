@@ -7,6 +7,17 @@ defmodule Toast.Components do
 
   alias Phoenix.LiveView.JS
 
+  # LiveView matches elements without an id by a key that changes on every
+  # render, so each update_toast/2 replaced the toast element. That replayed it
+  # to screen readers as a new live region. With a stable id it is patched in
+  # place, which needs LiveView 1.1+: the hook marks the attributes it sets with
+  # ignoreAttributes so the patch keeps them. Older versions keep replacing it.
+  @patch_in_place Code.ensure_loaded?(Phoenix.LiveView.JS) and
+                    function_exported?(Phoenix.LiveView.JS, :ignore_attributes, 1)
+
+  @doc false
+  def patch_in_place?, do: @patch_in_place
+
   @doc """
   Renders an individual toast notification.
   """
@@ -15,6 +26,7 @@ defmodule Toast.Components do
   def toast(assigns) do
     ~H"""
     <div
+      id={if patch_in_place?(), do: "toast-body-#{@toast.id}"}
       class={["toast", "toast-#{@toast.type}"]}
       data-toast-id={@toast.id}
       data-duration={@toast.duration}
@@ -37,6 +49,14 @@ defmodule Toast.Components do
         <div :if={@toast.description} class="toast-description">
           <%= render_content(@toast.description) %>
         </div>
+        <progress
+          :if={@toast.progress}
+          class="toast-progress"
+          max="100"
+          value={progress_value(@toast.progress)}
+          aria-label={progress_label(@toast)}
+        >
+        </progress>
         <div :if={@toast.action && !inline_action?(@toast.action)} class="toast-actions">
           <button
             type="button"
@@ -187,6 +207,21 @@ defmodule Toast.Components do
   end
 
   defp render_icon(_toast), do: nil
+
+  # :indeterminate renders a <progress> with no value, which browsers and
+  # screen readers treat as indeterminate.
+  defp progress_value(:indeterminate), do: nil
+  defp progress_value(value) when is_number(value), do: value |> max(0) |> min(100)
+
+  # The progressbar's accessible name. Text only, since the title or message may
+  # be HTML.
+  defp progress_label(%{title: title, message: message}) do
+    case title || message do
+      {:safe, _} -> "Progress"
+      nil -> "Progress"
+      text -> to_string(text)
+    end
+  end
 
   defp inline_action?(action) when is_map(action) do
     Map.get(action, :inline, false)

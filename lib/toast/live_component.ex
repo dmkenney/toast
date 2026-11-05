@@ -20,6 +20,9 @@ defmodule Toast.LiveComponent do
   - `"clear-all"` - Removes all toasts
   - `"action"` - Handles toast action button clicks
 
+  `"clear"` and `"action"` also send the toast's `:on_dismiss` event to the
+  parent LiveView, if it has one.
+
   It also accepts `:update_toast` via `send_update/3` (see `Toast.update_toast/2`).
   A map of toast structs by ID is kept alongside the stream so updates can be
   merged into the existing toast, with a list of their IDs, newest first, to
@@ -132,7 +135,11 @@ defmodule Toast.LiveComponent do
   end
 
   @impl true
-  def handle_event("clear", %{"id" => id}, socket) do
+  # The client says why it closed the toast. Only "timeout" is taken from it;
+  # anything else counts as the user closing it.
+  def handle_event("clear", %{"id" => id} = params, socket) do
+    reason = if params["reason"] == "timeout", do: "timeout", else: "closed"
+    notify_dismiss(socket, id, reason)
     {:noreply, fade_out(socket, id)}
   end
 
@@ -150,21 +157,39 @@ defmodule Toast.LiveComponent do
     # Use the action stored on the server. The copy in the page can be edited,
     # and turning its event name into an atom would let a client create atoms.
     case socket.assigns.toasts_by_id do
-      %{^toast_id => %{action: %{} = action}} ->
-        event = action[:event] || action["event"]
-        # Params arrive with string keys, as they did when read from the page.
-        params =
-          (action[:params] || action["params"] || %{}) |> Jason.encode!() |> Jason.decode!()
+      %{^toast_id => %{action: %{} = action}} -> send_to_parent(action, %{})
+      _ -> :ok
+    end
 
-        # Send the event to the parent LiveView
-        send(self(), {to_event(event), params})
+    notify_dismiss(socket, toast_id, "action")
+
+    # Remove the toast after action
+    {:noreply, fade_out(socket, toast_id)}
+  end
+
+  # Only toasts still shown are notified, so a toast is never reported twice.
+  defp notify_dismiss(socket, id, reason) do
+    case socket.assigns.toasts_by_id do
+      %{^id => %{on_dismiss: %{} = on_dismiss}} ->
+        send_to_parent(on_dismiss, %{"reason" => reason})
 
       _ ->
         :ok
     end
+  end
 
-    # Remove the toast after action
-    {:noreply, fade_out(socket, toast_id)}
+  # Send {event, params} to the parent LiveView, which runs in this process.
+  # Params get string keys, as they had when they were read from the page.
+  defp send_to_parent(spec, extra) do
+    event = spec[:event] || spec["event"]
+
+    params =
+      (spec[:params] || spec["params"] || %{})
+      |> Jason.encode!()
+      |> Jason.decode!()
+      |> Map.merge(extra)
+
+    send(self(), {to_event(event), params})
   end
 
   defp to_event(event) when is_atom(event), do: event

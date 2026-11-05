@@ -73,6 +73,7 @@ defmodule Toast.TestApp do
       ~H"""
       <h1>Source</h1>
       <p :if={assigns[:last_action]} id="last-action"><%= inspect(@last_action) %></p>
+      <p :if={assigns[:messages]} id="messages"><%= @messages |> Enum.reverse() |> Enum.map_join(" ", &inspect/1) %></p>
       <.live_component module={Toast.TestApp.ToastComponent} id="toast-component" />
       """
     end
@@ -130,9 +131,52 @@ defmodule Toast.TestApp do
       {:noreply, socket}
     end
 
-    def handle_info(message, socket) do
-      {:noreply, assign(socket, :last_action, message)}
+    def handle_event("toast_with_dismiss", params, socket) do
+      Toast.send_toast(:loading, "Exporting",
+        id: "exp",
+        duration: 0,
+        action: %{label: "Download", event: "download"},
+        on_dismiss: %{event: params["event"] || "export_closed", params: %{id: 7}}
+      )
+
+      {:noreply, socket}
     end
+
+    def handle_event("put_toast_with_dismiss_and_navigate", _params, socket) do
+      {:noreply,
+       socket
+       |> Toast.put_toast(:info, "Exporting",
+         id: "exp",
+         on_dismiss: %{event: :export_closed, params: %{id: 7}}
+       )
+       |> push_navigate(to: "/target")}
+    end
+
+    def handle_event("toast_with_progress", %{"progress" => progress} = params, socket) do
+      Toast.send_toast(:loading, params["message"] || "Exporting",
+        id: "prog",
+        duration: 0,
+        title: params["title"],
+        progress: to_progress(progress)
+      )
+
+      {:noreply, socket}
+    end
+
+    def handle_event("update_progress", %{"progress" => progress}, socket) do
+      Toast.update_toast("prog", progress: to_progress(progress))
+      {:noreply, socket}
+    end
+
+    def handle_info(message, socket) do
+      {:noreply,
+       socket
+       |> assign(:last_action, message)
+       |> assign(:messages, [message | socket.assigns[:messages] || []])}
+    end
+
+    defp to_progress("indeterminate"), do: :indeterminate
+    defp to_progress(progress), do: progress
 
     def handle_event("rerender", _params, socket) do
       {:noreply, assign(socket, :rerendered, true)}
@@ -156,7 +200,12 @@ defmodule Toast.TestApp do
     def render(assigns) do
       ~H"""
       <h1>Target</h1>
+      <p :if={assigns[:messages]} id="messages"><%= @messages |> Enum.reverse() |> Enum.map_join(" ", &inspect/1) %></p>
       """
+    end
+
+    def handle_info(message, socket) do
+      {:noreply, assign(socket, :messages, [message | socket.assigns[:messages] || []])}
     end
   end
 
