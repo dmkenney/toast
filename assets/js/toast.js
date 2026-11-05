@@ -91,6 +91,8 @@ export default {
 
   destroyed() {
     this.toasts.clear();
+    if (this.flashObserver) this.flashObserver.disconnect();
+    if (this.flashTimers) this.flashTimers.forEach(info => this.pauseFlashTimer(info));
     document.adoptedStyleSheets = document.adoptedStyleSheets.filter(sheet => sheet !== this.styleSheet);
   },
 
@@ -516,26 +518,102 @@ export default {
         e.preventDefault();
         e.stopPropagation();
 
-        const flashKey = e.target.dataset.flashKey;
-        const flashType = e.target.dataset.flashType;
         const flashToast = e.target.closest('.toast-flash');
-
-        if (flashToast) {
-          // Animate out
-          flashToast.style.opacity = '0';
-          flashToast.style.transform = 'translateX(100%)';
-
-          // Remove after animation and notify server
-          setTimeout(() => {
-            flashToast.remove();
-            // Send event to server to clear flash from state
-            this.pushToServer("clear-flash", { key: flashKey, type: flashType });
-
-            // Also send event to parent LiveView to clear from Phoenix flash
-            this.pushEvent("lv:clear-flash", { key: flashKey }, () => {});
-          }, this.animationDuration);
-        }
+        if (flashToast) this.closeFlash(flashToast);
       }
     });
+
+    // Flashes with a data-duration (from flash_durations) close themselves.
+    // They are rendered next to the stream, so this hook's updated() doesn't
+    // run when they change. Watch the group for them instead.
+    this.flashTimers = new Map();
+    this.flashHovered = false;
+    container.addEventListener('mouseenter', () => {
+      this.flashHovered = true;
+      this.flashTimers.forEach(info => this.pauseFlashTimer(info));
+    });
+    container.addEventListener('mouseleave', () => {
+      this.flashHovered = false;
+      this.flashTimers.forEach(info => this.startFlashTimer(info));
+    });
+    this.flashObserver = new MutationObserver(() => this.syncFlashTimers(container));
+    this.flashObserver.observe(container, { childList: true, subtree: true, characterData: true });
+    this.syncFlashTimers(container);
+  },
+
+  // Start a timer for each new flash with a duration, restart it when the
+  // server shows a new message under the same key, and drop timers for
+  // flashes that are gone.
+  syncFlashTimers(container) {
+    const flashes = container.querySelectorAll('.toast-flash[data-flash-key][data-duration]');
+    const seen = new Set();
+
+    flashes.forEach(flashEl => {
+      const duration = parseInt(flashEl.dataset.duration);
+      if (!(duration > 0)) return;
+      seen.add(flashEl);
+
+      const text = flashEl.textContent;
+      let info = this.flashTimers.get(flashEl);
+      if (info && info.text === text) return;
+      if (info) this.pauseFlashTimer(info);
+
+      info = { element: flashEl, text, timer: null, remaining: duration };
+      this.flashTimers.set(flashEl, info);
+      this.startFlashTimer(info);
+    });
+
+    for (const [flashEl, info] of this.flashTimers) {
+      if (!seen.has(flashEl)) {
+        this.pauseFlashTimer(info);
+        this.flashTimers.delete(flashEl);
+      }
+    }
+  },
+
+  startFlashTimer(info) {
+    if (info.timer || info.closed || this.flashHovered) return;
+    info.startedAt = Date.now();
+    info.timer = setTimeout(() => {
+      info.timer = null;
+      this.closeFlash(info.element);
+    }, Math.max(info.remaining, 0));
+  },
+
+  pauseFlashTimer(info) {
+    if (!info.timer) return;
+    clearTimeout(info.timer);
+    info.timer = null;
+    info.remaining -= Date.now() - info.startedAt;
+  },
+
+  // Fade the flash out, then clear it on the server, so it doesn't come back
+  // on the next render: from this component's state and from the LiveView's flash.
+  closeFlash(flashToast) {
+    if (flashToast.dataset.closing) return;
+    flashToast.dataset.closing = "true";
+
+    const info = this.flashTimers && this.flashTimers.get(flashToast);
+    if (info) {
+      info.closed = true;
+      this.pauseFlashTimer(info);
+    }
+
+    const flashKey = flashToast.dataset.flashKey;
+    const flashType = flashToast.dataset.flashType;
+
+    // Animate out
+    flashToast.style.opacity = '0';
+    flashToast.style.transform = 'translateX(100%)';
+
+    // Remove after animation and notify server
+    setTimeout(() => {
+      flashToast.remove();
+      // Send event to server to clear flash from state
+      this.pushToServer("clear-flash", { key: flashKey, type: flashType });
+
+      // Also send event to parent LiveView to clear from Phoenix flash
+      this.pushEvent("lv:clear-flash", { key: flashKey }, () => {});
+    }, this.animationDuration);
   }
 };

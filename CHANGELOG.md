@@ -8,11 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.4.0] - 2026-11-05
 
 ### Added
+- `flash_durations` option on `toast_group`: auto-dismiss `put_flash` messages by type, such as `%{info: 6000}`. Timers pause on hover, and a dismissed flash is cleared on the server like a closed one. Default `%{}` keeps flash messages open until closed
+- `flash_keys` option on `toast_group` and `flash_group`: show only the listed flash keys, such as `~w(info error)`, so keys like `phx.gen.auth`'s `:email` don't show as messages. `put_toast` toasts always show. Default `nil` shows every key
 - `progress` option: a progress bar from 0 to 100, or `:indeterminate`. Works with `update_toast`, and `progress: nil` removes it
 - `on_dismiss` option: sends `{event, params}` to the LiveView when the toast is closed in the browser, with a `"reason"` of `"closed"`, `"timeout"` or `"action"`
 
 ### Changed
 - On LiveView 1.1+, `update_toast` patches the toast in place instead of replacing its element, so screen readers only read out the text that changed
+
+### Fixed
+- `clear_flash` on the server removes the flash from the toast group. Shown flash messages now match the LiveView's current flash
 
 ## [0.3.1] - 2026-10-21
 

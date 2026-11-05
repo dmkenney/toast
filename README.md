@@ -170,7 +170,21 @@ def create(conn, params) do
 end
 ```
 
-Flash messages don't auto-dismiss. They stay until the user closes them. Use `put_toast` or `send_toast` for messages that should go away on their own.
+By default flash messages stay until the user closes them. To close them on their own, set `flash_durations` on `toast_group` with a time in milliseconds per flash type:
+
+```heex
+<Toast.toast_group flash={@flash} flash_durations={%{info: 6000, success: 6000}} />
+```
+
+Types not listed, such as `:error` here, stay until closed. Like toasts, the timers pause while the pointer is over the group. A flash that closes on its own is cleared on the server the same way the close button does it, so it doesn't come back on the next render. `Toast.flash_group/1` on controller pages has no JavaScript hook, so its flash messages never auto-dismiss.
+
+Toast shows every flash key as a message by default. Some keys aren't messages: `phx.gen.auth` keeps the login email in the flash under `:email`. Phoenix's own `flash_group` only shows `:info` and `:error`. To do the same, set `flash_keys`, which also works on `Toast.flash_group/1`:
+
+```heex
+<Toast.toast_group flash={@flash} flash_keys={~w(info error)} />
+```
+
+Toasts from `put_toast` travel in the flash under their own keys and always show. So don't filter `@flash` yourself with `Map.take/2`, which drops them too.
 
 ## Toast Types
 
@@ -215,6 +229,8 @@ Configure the toast container with these attributes:
 | `server_error_title` | string | `"Something went wrong!"` | Title when the server crashes |
 | `server_error_message` | string | `"Hang in there while we get back on track"` | Message when the server crashes |
 | `expanded` | boolean | `false` | Always show toasts expanded instead of stacked |
+| `flash_keys` | list | `nil` | Flash keys to show as messages, such as `~w(info error)`. `nil` shows every key. Toasts from `put_toast` always show (see [Flash Messages](#flash-messages)) |
+| `flash_durations` | map | `%{}` | Auto-dismiss time in milliseconds per flash type, such as `%{info: 6000}`. Types not listed stay until closed (see [Flash Messages](#flash-messages)) |
 
 ### Themes
 

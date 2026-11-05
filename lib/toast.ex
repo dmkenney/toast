@@ -184,8 +184,8 @@ defmodule Toast do
         {:noreply, assign(socket, :hidden_export_toast, id)}
       end
 
-  Flash messages from `put_flash/3` don't auto-dismiss. They stay until the user
-  closes them.
+  Flash messages from `put_flash/3` stay until the user closes them, unless
+  `toast_group/1` sets `flash_durations` for their type.
 
   ## HTML Content
 
@@ -263,6 +263,8 @@ defmodule Toast do
 
       <Toast.toast_group flash={@flash} expanded={true} />
 
+      <Toast.toast_group flash={@flash} flash_durations={%{info: 6000, success: 6000}} />
+
   ## Attributes
 
   * `:id` - DOM id of the toast list. The connection toasts use `"<id>-client-error"` and
@@ -282,6 +284,13 @@ defmodule Toast do
   * `:server_error_message` - Message shown when the server crashes (default: "Hang in there while we get back on track")
   * `:expanded` - Always show toasts expanded instead of stacked. When `false`, toasts
     stack and expand on hover (default: false)
+  * `:flash_keys` - Flash keys to show as messages, such as `~w(info error)`. Other
+    keys, like the `:email` that `phx.gen.auth` keeps in the flash, are not shown.
+    Toasts from `put_toast/4` always show (default: nil, every key)
+  * `:flash_durations` - Auto-dismiss time in milliseconds for `put_flash/3` messages,
+    by flash type, such as `%{info: 6000}`. Types not listed stay until closed. Like
+    toasts, they pause while the pointer is over the group (default: `%{}`, none
+    auto-dismiss)
 
   To translate the connection toasts, pass gettext strings:
 
@@ -305,6 +314,8 @@ defmodule Toast do
   attr(:server_error_title, :string, default: "Something went wrong!")
   attr(:server_error_message, :string, default: "Hang in there while we get back on track")
   attr(:expanded, :boolean, default: false)
+  attr(:flash_durations, :map, default: %{})
+  attr(:flash_keys, :list, default: nil)
 
   def toast_group(assigns) do
     ~H"""
@@ -324,6 +335,8 @@ defmodule Toast do
         server_error_title={@server_error_title}
         server_error_message={@server_error_message}
         expanded={@expanded}
+        flash_durations={@flash_durations}
+        flash_keys={@flash_keys}
       />
     """
   end
@@ -339,11 +352,17 @@ defmodule Toast do
   ## Examples
 
       <Toast.flash_group flash={@flash} />
+
+      <Toast.flash_group flash={@flash} flash_keys={~w(info error)} />
+
+  `flash_keys` limits which flash keys are shown, as on `toast_group/1`. Toasts
+  from `put_toast/4` always show.
   """
   attr(:flash, :map, required: true)
   attr(:position, :string, default: "bottom-right")
   attr(:theme, :string, default: "light")
   attr(:rich_colors, :boolean, default: false)
+  attr(:flash_keys, :list, default: nil)
 
   def flash_group(assigns) do
     ~H"""
@@ -353,6 +372,7 @@ defmodule Toast do
         position={@position}
         theme={@theme}
         rich_colors={@rich_colors}
+        keys={@flash_keys}
       />
     </div>
     """

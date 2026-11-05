@@ -244,14 +244,27 @@ defmodule Toast.Components do
   @doc """
   Renders flash messages when not connected to LiveView.
   This provides a fallback for server-rendered pages.
+
+  `durations` maps flash types to an auto-dismiss time in milliseconds, set on
+  each message as `data-duration`. Only the `Toast` hook inside `toast_group/1`
+  acts on it.
   """
   attr(:flash, :map, required: true)
   attr(:theme, :string, default: "light")
   attr(:position, :string, default: "bottom-right")
   attr(:rich_colors, :boolean, default: false)
+  attr(:durations, :map, default: %{}, doc: "auto-dismiss time in ms by flash type")
+  attr(:keys, :list, default: nil, doc: "flash keys to show, or nil for all")
 
   def flash_group(assigns) do
-    assigns = assign(assigns, :messages, Enum.map(assigns.flash, &flash_message/1))
+    assigns =
+      assign(
+        assigns,
+        :messages,
+        assigns.flash
+        |> Enum.filter(&show_flash?(&1, assigns.keys))
+        |> Enum.map(&flash_message(&1, assigns.durations))
+      )
 
     ~H"""
     <div class={["flash-messages", "flash-position-#{@position}"]} data-theme={@theme} data-rich-colors={to_string(@rich_colors)}>
@@ -260,6 +273,7 @@ defmodule Toast.Components do
              id={"flash-#{message.key}"}
              data-flash-key={message.key}
              data-flash-type={message.type}
+             data-duration={message.duration}
              data-mounted="true"
              role="status"
              aria-live="polite">
@@ -295,19 +309,44 @@ defmodule Toast.Components do
     """
   end
 
+  # put_toast/4 toasts travel in the flash under the prefix, so they always
+  # show. Other keys show when keys is nil or lists them, as atom or string.
+  defp show_flash?(_entry, nil), do: true
+
+  defp show_flash?({key, _value}, keys) do
+    key = to_string(key)
+    String.starts_with?(key, Toast.flash_prefix()) or Enum.any?(keys, &(to_string(&1) == key))
+  end
+
   # Toasts from Toast.put_toast/4 are stored in the flash as maps.
-  defp flash_message({key, %{type: _, message: _} = toast}) do
+  defp flash_message({key, %{type: _, message: _} = toast}, durations) do
     %{
       key: key,
       type: toast.type,
       title: toast[:title],
       message: toast.message,
-      description: toast[:description]
+      description: toast[:description],
+      duration: flash_duration(durations, toast.type)
     }
   end
 
-  defp flash_message({key, message}) do
-    %{key: key, type: key, title: nil, message: message, description: nil}
+  defp flash_message({key, message}, durations) do
+    %{
+      key: key,
+      type: key,
+      title: nil,
+      message: message,
+      description: nil,
+      duration: flash_duration(durations, key)
+    }
+  end
+
+  # Flash keys are strings in a LiveView and may be atoms elsewhere, so match
+  # durations given with either.
+  defp flash_duration(durations, type) do
+    Enum.find_value(durations, fn {key, ms} ->
+      to_string(key) == to_string(type) and is_integer(ms) and ms > 0 and ms
+    end)
   end
 
   defp flash_type_to_toast_type(:error), do: :error
