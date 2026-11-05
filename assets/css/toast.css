@@ -448,6 +448,64 @@
   color: hsl(0, 0%, 91%);
 }
 
+/* Progress bar. A native <progress>, so each engine needs its own selectors. */
+:where(.live-toast-group) .toast-progress {
+  display: block;
+  width: 100%;
+  height: 4px;
+  margin-top: 8px;
+  border: none;
+  border-radius: 2px;
+  overflow: hidden;
+  appearance: none;
+  -webkit-appearance: none;
+  color: var(--toast-color);
+  background: color-mix(in srgb, currentColor 15%, transparent);
+}
+
+:where(.live-toast-group) .toast-progress::-webkit-progress-bar {
+  background: transparent;
+}
+
+:where(.live-toast-group) .toast-progress::-webkit-progress-value {
+  background: currentColor;
+  border-radius: 2px;
+  transition: width 300ms ease;
+}
+
+:where(.live-toast-group) .toast-progress::-moz-progress-bar {
+  background: currentColor;
+  border-radius: 2px;
+}
+
+/* Indeterminate: no value, so slide a band across the track */
+:where(.live-toast-group) .toast-progress:indeterminate {
+  background:
+    linear-gradient(currentColor, currentColor) 0 0 / 40% 100% no-repeat,
+    color-mix(in srgb, currentColor 15%, transparent);
+  animation: toast-progress-indeterminate 1.2s ease-in-out infinite;
+}
+
+:where(.live-toast-group) .toast-progress:indeterminate::-moz-progress-bar {
+  background: transparent;
+}
+
+@keyframes toast-progress-indeterminate {
+  from {
+    background-position: -70% 0, 0 0;
+  }
+  to {
+    background-position: 170% 0, 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(.live-toast-group) .toast-progress:indeterminate {
+    animation: none;
+    background-position: 50% 0, 0 0;
+  }
+}
+
 /* Actions */
 :where(.live-toast-group) .toast-actions {
   margin-top: 8px;

@@ -15,7 +15,7 @@ defmodule Toast do
 
       def deps do
         [
-          {:toast, "~> 0.3.0"}
+          {:toast, "~> 0.4.0"}
         ]
       end
 
@@ -132,12 +132,56 @@ defmodule Toast do
   * `:important` - Use `aria-live="assertive"` (default: false)
   * `:icon` - Custom SVG icon HTML
   * `:action` - Map with `:label`, `:event`, optional `:params` and `:inline`
+  * `:progress` - Show a progress bar. A number from 0 to 100, or `:indeterminate`
+    for a bar with no known value (default: nil, no bar)
+  * `:on_dismiss` - Map with `:event` and optional `:params`, sent to the LiveView
+    when the toast is closed in the browser
 
   Clicking an action button closes the toast and sends `{event, params}` to the
   LiveView. The event is an atom and `params` has string keys:
 
       def handle_info({:undo_action, %{"id" => id}}, socket) do
         {:noreply, socket}
+      end
+
+  ## Progress
+
+  Pair `:progress` with `duration: 0` and `update_toast/2` for a long-running job.
+  The bar is a native `<progress>` element, so screen readers see it as a progress
+  bar, labeled with the toast's title or message. Values outside 0..100 are clamped.
+
+      Toast.send_toast(:loading, "Exporting...", id: "export-42", duration: 0, progress: 0)
+      Toast.update_toast("export-42", progress: 45, description: "4.5M of 10M rows")
+      Toast.update_toast("export-42", type: :success, message: "Export ready", progress: nil)
+
+  On LiveView 1.1+, each update patches the toast in place: it doesn't animate in
+  again, its timer only restarts when `:duration` changes, and screen readers only
+  read out the text that changed. A changed `:progress` value alone is not read
+  out. On older versions the toast element is replaced on each update, which looks
+  the same but may be read out again in full.
+
+  ## Dismiss callback
+
+  `:on_dismiss` tells the LiveView that a toast went away in the browser. It sends
+  `{event, params}`, like an action, with a `"reason"` key added to `params`:
+
+  * `"closed"` - the user clicked the close button
+  * `"timeout"` - the toast's `:duration` ran out
+  * `"action"` - the user clicked the action button (the action's own event is sent first)
+
+  It is not sent when the server removes the toast with `clear_toast/1`,
+  `clear_all_toasts/0` or `:max_toasts`, when `update_toast/2` changes it, or
+  while the LiveView is disconnected. A `"reason"` key in your own `params` is
+  replaced. The event name is stored on the server, as with actions.
+
+      Toast.send_toast(:loading, "Exporting...",
+        id: "export-42",
+        duration: 0,
+        on_dismiss: %{event: :export_toast_closed, params: %{id: 42}}
+      )
+
+      def handle_info({:export_toast_closed, %{"id" => id, "reason" => _reason}}, socket) do
+        {:noreply, assign(socket, :hidden_export_toast, id)}
       end
 
   Flash messages from `put_flash/3` don't auto-dismiss. They stay until the user
@@ -175,7 +219,9 @@ defmodule Toast do
     :icon,
     :close_button,
     :position,
-    :important
+    :important,
+    :progress,
+    :on_dismiss
   ]
 
   @type t :: %__MODULE__{
@@ -189,7 +235,9 @@ defmodule Toast do
           icon: String.t() | nil,
           close_button: boolean(),
           position: atom() | nil,
-          important: boolean()
+          important: boolean(),
+          progress: number() | :indeterminate | nil,
+          on_dismiss: map() | nil
         }
 
   @doc """
@@ -415,7 +463,8 @@ defmodule Toast do
   Updates an existing toast by ID.
 
   `updates` is a keyword list of toast fields (`:type`, `:message`, `:title`,
-  `:description`, `:duration`, `:action`, `:icon`, `:close_button`, `:important`).
+  `:description`, `:duration`, `:action`, `:icon`, `:close_button`, `:important`,
+  `:progress`, `:on_dismiss`). Pass `progress: nil` to remove the progress bar.
   The toast is re-rendered in place. A new `:duration` restarts its timer.
   Unknown fields are ignored, and an ID that isn't showing is a no-op.
 
@@ -427,6 +476,8 @@ defmodule Toast do
 
       Toast.update_toast("toast-123", message: "Updated message", type: :success)
       Toast.update_toast("toast-123", title: "New Title", duration: 10_000)
+
+      Toast.update_toast("export-42", progress: 60, description: "6M of 10M rows")
   """
   def update_toast(toast_id, updates) do
     Phoenix.LiveView.send_update(self(), Toast.LiveComponent,
@@ -467,7 +518,9 @@ defmodule Toast do
       icon: opts[:icon],
       close_button: Keyword.get(opts, :close_button, true),
       position: opts[:position],
-      important: Keyword.get(opts, :important, false)
+      important: Keyword.get(opts, :important, false),
+      progress: opts[:progress],
+      on_dismiss: opts[:on_dismiss]
     }
   end
 

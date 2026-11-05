@@ -31,7 +31,7 @@ Add `toast` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:toast, "~> 0.3.0"}
+    {:toast, "~> 0.4.0"}
   ]
 end
 ```
@@ -283,6 +283,8 @@ Toast.send_toast(:success, "Message",
 | `important` | boolean | `false` | Use `aria-live="assertive"` for screen readers |
 | `icon` | string | `nil` | Custom SVG icon HTML |
 | `action` | map | `nil` | Action button configuration |
+| `progress` | number or `:indeterminate` | `nil` | Progress bar, 0 to 100. `:indeterminate` for no known value |
+| `on_dismiss` | map | `nil` | `%{event: ..., params: ...}` sent to the LiveView when the toast is closed in the browser |
 
 ### Action Button Options
 
@@ -313,6 +315,54 @@ def handle_info({:undo_delete, %{"id" => id}}, socket) do
   {:noreply, socket}
 end
 ```
+
+### Progress
+
+`progress` shows a progress bar: a number from 0 to 100, or `:indeterminate` when the amount isn't known. Pair it with `duration: 0` and `update_toast/2` for a long-running job:
+
+```elixir
+Toast.send_toast(:loading, "Exporting...", id: "export-42", duration: 0, progress: 0)
+
+# Later, as the job runs
+Toast.update_toast("export-42", progress: 45, description: "4.5M of 10M rows")
+
+# When it's done. progress: nil removes the bar
+Toast.update_toast("export-42",
+  type: :success,
+  message: "Export ready",
+  description: nil,
+  progress: nil,
+  duration: 6000,
+  action: %{label: "Download", event: "download_export", params: %{id: 42}}
+)
+```
+
+The bar is a native `<progress>` element, so screen readers see it as a progress bar, labeled with the toast's title or message. Values outside 0 to 100 are clamped.
+
+On LiveView 1.1 and later, each update patches the toast in place: it doesn't animate in again, its timer only restarts when `duration` changes, and screen readers only read out the text that changed. A changed `progress` value alone isn't read out. On older LiveView versions the toast element is replaced on each update, which looks the same but may be read out again in full.
+
+### Dismiss Callback
+
+`on_dismiss` tells the LiveView when a toast goes away in the browser. It sends `{event, params}` like an action, with a `"reason"` key added to `params`:
+
+- `"closed"`: the user clicked the close button
+- `"timeout"`: the toast's `duration` ran out
+- `"action"`: the user clicked the action button. The action's own event is sent first
+
+```elixir
+Toast.send_toast(:loading, "Exporting...",
+  id: "export-42",
+  duration: 0,
+  on_dismiss: %{event: :export_toast_closed, params: %{id: 42}}
+)
+
+def handle_info({:export_toast_closed, %{"id" => id, "reason" => _reason}}, socket) do
+  # don't show this export's toast again on the next page
+  {:noreply, socket}
+end
+```
+
+It isn't sent when the server removes the toast (`clear_toast/1`, `clear_all_toasts/0`, or `max_toasts`), when `update_toast/2` changes it, or while the LiveView is disconnected. A `"reason"` key in your own `params` is replaced. As with actions, the event name is kept on the server, never read from the page.
 
 ## Advanced Usage
 
@@ -364,7 +414,7 @@ Toast.update_toast("upload-toast",
 )
 ```
 
-The toast is re-rendered in place. A new `duration` restarts its timer. Updating an ID that is no longer showing does nothing.
+The toast is re-rendered in place. A new `duration` restarts its timer. Updating an ID that is no longer showing does nothing. Any toast option can be updated, including `progress`, `action`, and `on_dismiss`.
 
 ### Clear Toasts
 
