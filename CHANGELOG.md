@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-11-05
+
+### Added
+- `progress` option: a progress bar from 0 to 100, or `:indeterminate`. Works with `update_toast`, and `progress: nil` removes it
+- `on_dismiss` option: sends `{event, params}` to the LiveView when the toast is closed in the browser, with a `"reason"` of `"closed"`, `"timeout"` or `"action"`
+
+### Changed
+- On LiveView 1.1+, `update_toast` patches the toast in place instead of replacing its element, so screen readers only read out the text that changed
+
 ## [0.3.1] - 2026-10-21
 
 ### Fixed
