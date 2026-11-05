@@ -254,13 +254,16 @@ defmodule Toast.Components do
   attr(:position, :string, default: "bottom-right")
   attr(:rich_colors, :boolean, default: false)
   attr(:durations, :map, default: %{}, doc: "auto-dismiss time in ms by flash type")
+  attr(:keys, :list, default: nil, doc: "flash keys to show, or nil for all")
 
   def flash_group(assigns) do
     assigns =
       assign(
         assigns,
         :messages,
-        Enum.map(assigns.flash, &flash_message(&1, assigns.durations))
+        assigns.flash
+        |> Enum.filter(&show_flash?(&1, assigns.keys))
+        |> Enum.map(&flash_message(&1, assigns.durations))
       )
 
     ~H"""
@@ -304,6 +307,15 @@ defmodule Toast.Components do
       <% end %>
     </div>
     """
+  end
+
+  # put_toast/4 toasts travel in the flash under the prefix, so they always
+  # show. Other keys show when keys is nil or lists them, as atom or string.
+  defp show_flash?(_entry, nil), do: true
+
+  defp show_flash?({key, _value}, keys) do
+    key = to_string(key)
+    String.starts_with?(key, Toast.flash_prefix()) or Enum.any?(keys, &(to_string(&1) == key))
   end
 
   # Toasts from Toast.put_toast/4 are stored in the flash as maps.

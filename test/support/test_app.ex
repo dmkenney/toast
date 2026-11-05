@@ -28,6 +28,13 @@ defmodule Toast.TestApp do
       """
     end
 
+    def flash_keys(assigns) do
+      ~H"""
+      <Toast.toast_group flash={@flash} flash_keys={[:info, "error"]} />
+      <%= @inner_content %>
+      """
+    end
+
     def flash_durations(assigns) do
       ~H"""
       <Toast.toast_group flash={@flash} flash_durations={%{:info => 6000, "warning" => 3000}} />
@@ -220,7 +227,8 @@ defmodule Toast.TestApp do
     use Phoenix.LiveView
 
     def mount(_params, _session, socket) do
-      {:ok, socket, layout: {Layouts, :flash_durations}}
+      layout = if socket.assigns.live_action == :keys, do: :flash_keys, else: :flash_durations
+      {:ok, socket, layout: {Layouts, layout}}
     end
 
     def render(assigns) do
@@ -367,6 +375,7 @@ defmodule Toast.TestApp do
       live("/custom-id", CustomIdLive)
       live("/limit", LimitLive)
       live("/flash-durations", FlashDurationsLive)
+      live("/flash-keys", FlashDurationsLive, :keys)
     end
   end
 

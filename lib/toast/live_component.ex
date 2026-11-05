@@ -63,7 +63,8 @@ defmodule Toast.LiveComponent do
           :server_error_title,
           :server_error_message,
           :expanded,
-          :flash_durations
+          :flash_durations,
+          :flash_keys
         ])
       )
 
@@ -114,7 +115,7 @@ defmodule Toast.LiveComponent do
     ~H"""
     <div class={"live-toast-group toast-position-#{@computed_position}"}>
       <Toast.Components.connection_group :if={@is_top_position && assigns[:connection_toasts]} id={assigns[:dom_id] || "toast-group"} theme={assigns[:theme] || "light"} rich_colors={assigns[:rich_colors] || false} client_error_title={@client_error_title} client_error_message={@client_error_message} server_error_title={@server_error_title} server_error_message={@server_error_message} />
-      <Toast.Components.flash_group :if={@is_top_position && map_size(@flash_messages) > 0} flash={@flash_messages} position={@computed_position} theme={assigns[:theme] || "light"} rich_colors={assigns[:rich_colors] || false} durations={assigns[:flash_durations] || %{}} />
+      <Toast.Components.flash_group :if={@is_top_position && map_size(@flash_messages) > 0} flash={@flash_messages} position={@computed_position} theme={assigns[:theme] || "light"} rich_colors={assigns[:rich_colors] || false} durations={assigns[:flash_durations] || %{}} keys={assigns[:flash_keys]} />
       <div 
         id={assigns[:dom_id] || "toast-group"}
         class="live-toast-stream"
@@ -130,7 +131,7 @@ defmodule Toast.LiveComponent do
           <Components.toast toast={toast} />
         </div>
       </div>
-      <Toast.Components.flash_group :if={!@is_top_position && map_size(@flash_messages) > 0} flash={@flash_messages} position={@computed_position} theme={assigns[:theme] || "light"} rich_colors={assigns[:rich_colors] || false} durations={assigns[:flash_durations] || %{}} />
+      <Toast.Components.flash_group :if={!@is_top_position && map_size(@flash_messages) > 0} flash={@flash_messages} position={@computed_position} theme={assigns[:theme] || "light"} rich_colors={assigns[:rich_colors] || false} durations={assigns[:flash_durations] || %{}} keys={assigns[:flash_keys]} />
       <Toast.Components.connection_group :if={!@is_top_position && assigns[:connection_toasts]} id={assigns[:dom_id] || "toast-group"} theme={assigns[:theme] || "light"} rich_colors={assigns[:rich_colors] || false} client_error_title={@client_error_title} client_error_message={@client_error_message} server_error_title={@server_error_title} server_error_message={@server_error_message} />
     </div>
     """
